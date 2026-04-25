@@ -19,7 +19,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       tableName: 'favourite_routes',
-      timestamps: false,
+      timestamps: true,
     }
   );
 

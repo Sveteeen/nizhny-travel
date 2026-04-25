@@ -23,7 +23,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       tableName: 'places_photos',
-      timestamps: false,
+      timestamps: true,
     }
   );
 

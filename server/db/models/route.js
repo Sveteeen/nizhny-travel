@@ -31,7 +31,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       tableName: 'routes',
-      timestamps: false,
+      timestamps: true,
     }
   );
 

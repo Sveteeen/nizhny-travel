@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       tableName: 'tags',
-      timestamps: false,
+      timestamps: true,
     }
   );
 

@@ -23,7 +23,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       tableName: 'routes_places',
-      timestamps: false,
+      timestamps: true,
     }
   );
 
