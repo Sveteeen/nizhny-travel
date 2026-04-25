@@ -10,6 +10,9 @@ type Category = {
 type PlaceListItem = {
   id: number
   name: string
+  address: string
+  latitude: number | string
+  longitude: number | string
   main_photo: string
   category: Category | null
 }
@@ -207,8 +210,74 @@ const RouteMiniMap = ({ apiKey, points }: RouteMiniMapProps) => {
   return <div ref={mapRef} className="map" />
 }
 
+type PlacesOverviewMapProps = {
+  apiKey: string
+  places: PlaceListItem[]
+}
+
+const PlacesOverviewMap = ({ apiKey, places }: PlacesOverviewMapProps) => {
+  const mapRef = useRef<HTMLDivElement | null>(null)
+  const mapInstanceRef = useRef<any>(null)
+
+  useEffect(() => {
+    let active = true
+    const initMap = async () => {
+      try {
+        await loadYandexMaps(apiKey)
+        if (!active || !mapRef.current || !window.ymaps || places.length === 0) return
+
+        mapInstanceRef.current?.destroy()
+        mapInstanceRef.current = new window.ymaps.Map(mapRef.current, {
+          center: [56.3269, 44.0059],
+          zoom: 12,
+          controls: ['zoomControl'],
+        })
+
+        const bounds: number[][] = []
+        places.forEach((place) => {
+          const latitude = Number(place.latitude)
+          const longitude = Number(place.longitude)
+          if (Number.isNaN(latitude) || Number.isNaN(longitude)) return
+          bounds.push([latitude, longitude])
+
+          const marker = new window.ymaps.Placemark(
+            [latitude, longitude],
+            {
+              hintContent: place.name,
+              balloonContentHeader: place.name,
+              balloonContentBody: place.address,
+            },
+            { preset: 'islands#blueIcon' }
+          )
+          mapInstanceRef.current.geoObjects.add(marker)
+        })
+
+        if (bounds.length > 1) {
+          mapInstanceRef.current.setBounds(bounds, {
+            checkZoomRange: true,
+            zoomMargin: 30,
+          })
+        } else if (bounds.length === 1) {
+          mapInstanceRef.current.setCenter(bounds[0], 14)
+        }
+      } catch {
+        // no-op
+      }
+    }
+
+    initMap()
+    return () => {
+      active = false
+      mapInstanceRef.current?.destroy()
+      mapInstanceRef.current = null
+    }
+  }, [apiKey, places])
+
+  return <div className="map map--big" ref={mapRef} />
+}
+
 function App() {
-  const [activeTab, setActiveTab] = useState<'places' | 'routes'>('places')
+  const [activeTab, setActiveTab] = useState<'places' | 'routes' | 'map'>('places')
   const [places, setPlaces] = useState<PlaceListItem[]>([])
   const [routes, setRoutes] = useState<RouteListItem[]>([])
   const [placeDetails, setPlaceDetails] = useState<PlaceDetails | null>(null)
@@ -369,6 +438,9 @@ function App() {
         >
           Маршруты
         </button>
+        <button className={`tab ${activeTab === 'map' ? 'tab--active' : ''}`} onClick={() => setActiveTab('map')}>
+          Карта
+        </button>
       </section>
 
       {loading && (
@@ -444,6 +516,20 @@ function App() {
               </div>
             </article>
           ))}
+        </section>
+      )}
+
+      {!loading && !error && activeTab === 'map' && (
+        <section className="map-page">
+          <div className="map-page__header">
+            <h2>Карта всех достопримечательностей</h2>
+            <p>На карте отображены все точки из базы данных. Нажми на маркер, чтобы увидеть название и адрес.</p>
+          </div>
+          {yandexApiKey ? (
+            <PlacesOverviewMap apiKey={yandexApiKey} places={places} />
+          ) : (
+            <div className="map map--big map--fallback">Не настроен ключ Яндекс.Карт</div>
+          )}
         </section>
       )}
 

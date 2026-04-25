@@ -2,7 +2,7 @@ const { Place, Category, PlacePhoto, TagPlace, Tag } = require('../db/models');
 
 const getAllPlaces = async () => {
   const places = await Place.findAll({
-    attributes: ['id', 'name', 'main_photo'],
+    attributes: ['id', 'name', 'address', 'latitude', 'longitude', 'main_photo'],
     include: [
       {
         model: Category,
@@ -16,6 +16,9 @@ const getAllPlaces = async () => {
   return places.map((place) => ({
     id: place.id,
     name: place.name,
+    address: place.address,
+    latitude: place.latitude,
+    longitude: place.longitude,
     main_photo: place.main_photo,
     category: place.category
       ? { id: place.category.id, name: place.category.name }
