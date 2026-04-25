@@ -14,7 +14,8 @@ build/
 .idea/
 
 # local uploads
-server/uploads/*
+server/uploads/**
+!server/uploads/
 !server/uploads/places/
 !server/uploads/places/main/
 !server/uploads/places/main/.gitkeep
