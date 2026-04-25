@@ -1,7 +1,6 @@
 import './App.css'
-import { useEffect, useState, type SyntheticEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type SyntheticEvent } from 'react'
 import axios from 'axios'
-import { CircleMarker, MapContainer, Polyline, TileLayer } from 'react-leaflet'
 
 type Category = {
   id: number
@@ -59,6 +58,13 @@ type RouteDetails = {
 
 const API_URL = 'http://localhost:5000/api'
 const DEFAULT_ROUTE_COVER = 'http://localhost:5000/uploads/places/main/kremlin.png'
+const YMAPS_SCRIPT_ID = 'yandex-maps-script'
+
+declare global {
+  interface Window {
+    ymaps?: any
+  }
+}
 
 const normalizeImageUrl = (value: string) => {
   if (!value) return value
@@ -72,6 +78,135 @@ const handleImageFallback = (event: SyntheticEvent<HTMLImageElement, Event>) => 
   event.currentTarget.src = DEFAULT_ROUTE_COVER
 }
 
+const loadYandexMaps = (apiKey: string) =>
+  new Promise<void>((resolve, reject) => {
+    if (window.ymaps) {
+      window.ymaps.ready(() => resolve())
+      return
+    }
+
+    const existingScript = document.getElementById(YMAPS_SCRIPT_ID) as HTMLScriptElement | null
+    if (existingScript) {
+      existingScript.addEventListener('load', () => {
+        window.ymaps?.ready(() => resolve())
+      })
+      existingScript.addEventListener('error', () => reject(new Error('Failed to load Yandex Maps')))
+      return
+    }
+
+    const script = document.createElement('script')
+    script.id = YMAPS_SCRIPT_ID
+    script.src = `https://api-maps.yandex.ru/2.1/?apikey=${apiKey}&lang=ru_RU`
+    script.async = true
+    script.onload = () => window.ymaps?.ready(() => resolve())
+    script.onerror = () => reject(new Error('Failed to load Yandex Maps'))
+    document.head.appendChild(script)
+  })
+
+type PlaceMiniMapProps = {
+  apiKey: string
+  latitude: number
+  longitude: number
+}
+
+const PlaceMiniMap = ({ apiKey, latitude, longitude }: PlaceMiniMapProps) => {
+  const mapRef = useRef<HTMLDivElement | null>(null)
+  const mapInstanceRef = useRef<any>(null)
+
+  useEffect(() => {
+    let active = true
+
+    const initMap = async () => {
+      try {
+        await loadYandexMaps(apiKey)
+        if (!active || !mapRef.current || !window.ymaps) return
+
+        mapInstanceRef.current?.destroy()
+        mapInstanceRef.current = new window.ymaps.Map(mapRef.current, {
+          center: [latitude, longitude],
+          zoom: 15,
+          controls: ['zoomControl'],
+        })
+        const marker = new window.ymaps.Placemark([latitude, longitude], {}, {
+          preset: 'islands#blueCircleDotIcon',
+        })
+        mapInstanceRef.current.geoObjects.add(marker)
+      } catch {
+        // no-op, graceful fallback below
+      }
+    }
+
+    initMap()
+    return () => {
+      active = false
+      mapInstanceRef.current?.destroy()
+      mapInstanceRef.current = null
+    }
+  }, [apiKey, latitude, longitude])
+
+  return <div ref={mapRef} className="map" />
+}
+
+type RouteMiniMapProps = {
+  apiKey: string
+  points: Array<{ latitude: number; longitude: number }>
+}
+
+const RouteMiniMap = ({ apiKey, points }: RouteMiniMapProps) => {
+  const mapRef = useRef<HTMLDivElement | null>(null)
+  const mapInstanceRef = useRef<any>(null)
+
+  useEffect(() => {
+    let active = true
+    const initMap = async () => {
+      try {
+        await loadYandexMaps(apiKey)
+        if (!active || !mapRef.current || !window.ymaps || points.length === 0) return
+
+        mapInstanceRef.current?.destroy()
+        const center = points[0]
+        mapInstanceRef.current = new window.ymaps.Map(mapRef.current, {
+          center: [center.latitude, center.longitude],
+          zoom: 13,
+          controls: ['zoomControl'],
+        })
+
+        const routeLine = new window.ymaps.Polyline(
+          points.map((point) => [point.latitude, point.longitude]),
+          {},
+          { strokeColor: '#2f6dff', strokeWidth: 4, strokeOpacity: 0.9 }
+        )
+
+        mapInstanceRef.current.geoObjects.add(routeLine)
+        points.forEach((point, index) => {
+          const marker = new window.ymaps.Placemark(
+            [point.latitude, point.longitude],
+            { iconCaption: `${index + 1}` },
+            { preset: 'islands#blueCircleDotIcon' }
+          )
+          mapInstanceRef.current.geoObjects.add(marker)
+        })
+
+        mapInstanceRef.current.setBounds(routeLine.geometry.getBounds(), {
+          checkZoomRange: true,
+          zoomMargin: 20,
+        })
+      } catch {
+        // no-op, graceful fallback below
+      }
+    }
+
+    initMap()
+    return () => {
+      active = false
+      mapInstanceRef.current?.destroy()
+      mapInstanceRef.current = null
+    }
+  }, [apiKey, points])
+
+  return <div ref={mapRef} className="map" />
+}
+
 function App() {
   const [activeTab, setActiveTab] = useState<'places' | 'routes'>('places')
   const [places, setPlaces] = useState<PlaceListItem[]>([])
@@ -83,8 +218,14 @@ function App() {
   const [favoritesLoading, setFavoritesLoading] = useState<number | null>(null)
   const [favoriteRoutesLoading, setFavoriteRoutesLoading] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [yandexApiKey, setYandexApiKey] = useState<string | null>(null)
   const [favoritePlaceIds, setFavoritePlaceIds] = useState<Set<number>>(new Set())
   const [favoriteRouteIds, setFavoriteRouteIds] = useState<Set<number>>(new Set())
+  const [viewerState, setViewerState] = useState<{
+    images: { src: string; alt: string }[]
+    index: number
+    title: string
+  } | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -98,11 +239,13 @@ function App() {
           axios.get<PlaceListItem[]>(`${API_URL}/places`),
           axios.get<RouteListItem[]>(`${API_URL}/routes`),
         ])
+        const configRes = await axios.get<{ yandexMapsApiKey: string | null }>(`${API_URL}/config/public`)
 
         if (!mounted) return
 
         setPlaces(placesRes.data)
         setRoutes(routesRes.data)
+        setYandexApiKey(configRes.data.yandexMapsApiKey)
       } catch {
         if (!mounted) return
         setError('Не удалось загрузить данные. Проверьте, что сервер запущен на localhost:5000.')
@@ -176,6 +319,32 @@ function App() {
       setFavoriteRoutesLoading(null)
     }
   }
+
+  const openViewer = (images: { src: string; alt: string }[], startIndex: number, title: string) => {
+    if (!images.length) return
+    setViewerState({ images, index: startIndex, title })
+  }
+
+  const routePhotos = useMemo(() => {
+    if (!routeDetails) return []
+    return routeDetails.points
+      .filter((point) => point.place?.main_photo)
+      .map((point) => ({
+        src: normalizeImageUrl(point.place!.main_photo),
+        alt: point.place!.name,
+      }))
+  }, [routeDetails])
+
+  const placePhotos = useMemo(() => {
+    if (!placeDetails) return []
+    return [
+      { src: normalizeImageUrl(placeDetails.main_photo), alt: placeDetails.name },
+      ...placeDetails.photos.map((photo) => ({
+        src: normalizeImageUrl(photo.photo),
+        alt: placeDetails.name,
+      })),
+    ]
+  }, [placeDetails])
 
   return (
     <div className="app">
@@ -293,6 +462,7 @@ function App() {
                   src={normalizeImageUrl(placeDetails.main_photo)}
                   alt={placeDetails.name}
                   className="modal__image"
+                  onClick={() => openViewer(placePhotos, 0, placeDetails.name)}
                 />
                 <h2>{placeDetails.name}</h2>
                 <p className="modal__meta">{placeDetails.category?.name ?? 'Без категории'}</p>
@@ -304,22 +474,15 @@ function App() {
                   <strong>Координаты:</strong> {placeDetails.latitude}, {placeDetails.longitude}
                 </p>
                 <div className="map-wrap">
-                  <MapContainer
-                    center={[Number(placeDetails.latitude), Number(placeDetails.longitude)]}
-                    zoom={15}
-                    scrollWheelZoom={false}
-                    className="map"
-                  >
-                    <TileLayer
-                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  {yandexApiKey ? (
+                    <PlaceMiniMap
+                      apiKey={yandexApiKey}
+                      latitude={Number(placeDetails.latitude)}
+                      longitude={Number(placeDetails.longitude)}
                     />
-                    <CircleMarker
-                      center={[Number(placeDetails.latitude), Number(placeDetails.longitude)]}
-                      radius={8}
-                      pathOptions={{ color: '#2f6dff', fillColor: '#77a2ff', fillOpacity: 0.9 }}
-                    />
-                  </MapContainer>
+                  ) : (
+                    <div className="map map--fallback">Не настроен ключ Яндекс.Карт</div>
+                  )}
                 </div>
                 <div className="tags">
                   {placeDetails.tags.map((tag) => (
@@ -330,8 +493,13 @@ function App() {
                 </div>
                 {!!placeDetails.photos.length && (
                   <div className="gallery">
-                    {placeDetails.photos.map((photo) => (
-                      <img key={photo.id} src={normalizeImageUrl(photo.photo)} alt={placeDetails.name} />
+                    {placeDetails.photos.map((photo, idx) => (
+                      <img
+                        key={photo.id}
+                        src={normalizeImageUrl(photo.photo)}
+                        alt={placeDetails.name}
+                        onClick={() => openViewer(placePhotos, idx + 1, placeDetails.name)}
+                      />
                     ))}
                   </div>
                 )}
@@ -345,6 +513,13 @@ function App() {
                   alt={routeDetails.name}
                   className="modal__image"
                   onError={handleImageFallback}
+                  onClick={() =>
+                    openViewer(
+                      [{ src: normalizeImageUrl(routeDetails.main_photo), alt: routeDetails.name }, ...routePhotos],
+                      0,
+                      routeDetails.name
+                    )
+                  }
                 />
                 <h2>{routeDetails.name}</h2>
                 <p className="modal__meta">
@@ -353,36 +528,19 @@ function App() {
                 <p>{routeDetails.description}</p>
                 {!!routeDetails.points.length && (
                   <div className="map-wrap">
-                    <MapContainer
-                      center={[
-                        Number(routeDetails.points[0].place?.latitude ?? 56.3269),
-                        Number(routeDetails.points[0].place?.longitude ?? 44.0059),
-                      ]}
-                      zoom={13}
-                      scrollWheelZoom={false}
-                      className="map"
-                    >
-                      <TileLayer
-                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                      />
-                      <Polyline
-                        positions={routeDetails.points
+                    {yandexApiKey ? (
+                      <RouteMiniMap
+                        apiKey={yandexApiKey}
+                        points={routeDetails.points
                           .filter((point) => point.place)
-                          .map((point) => [Number(point.place!.latitude), Number(point.place!.longitude)])}
-                        pathOptions={{ color: '#2f6dff', weight: 4 }}
+                          .map((point) => ({
+                            latitude: Number(point.place!.latitude),
+                            longitude: Number(point.place!.longitude),
+                          }))}
                       />
-                      {routeDetails.points
-                        .filter((point) => point.place)
-                        .map((point) => (
-                          <CircleMarker
-                            key={`route-point-map-${point.order_index}`}
-                            center={[Number(point.place!.latitude), Number(point.place!.longitude)]}
-                            radius={7}
-                            pathOptions={{ color: '#1d4bb4', fillColor: '#7ea6ff', fillOpacity: 0.9 }}
-                          />
-                        ))}
-                    </MapContainer>
+                    ) : (
+                      <div className="map map--fallback">Не настроен ключ Яндекс.Карт</div>
+                    )}
                   </div>
                 )}
 
@@ -400,19 +558,67 @@ function App() {
                 </div>
                 <h3>Фото по маршруту</h3>
                 <div className="gallery">
-                  {routeDetails.points
-                    .filter((point) => point.place?.main_photo)
-                    .map((point) => (
+                  {routePhotos.map((photo, index) => (
                       <img
-                        key={`route-photo-${routeDetails.id}-${point.order_index}`}
-                        src={normalizeImageUrl(point.place!.main_photo)}
-                        alt={point.place!.name}
+                        key={`route-photo-${routeDetails.id}-${index}`}
+                        src={photo.src}
+                        alt={photo.alt}
                         onError={handleImageFallback}
+                        onClick={() =>
+                          openViewer(
+                            [{ src: normalizeImageUrl(routeDetails.main_photo), alt: routeDetails.name }, ...routePhotos],
+                            index + 1,
+                            routeDetails.name
+                          )
+                        }
                       />
                     ))}
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {viewerState && (
+        <div className="lightbox" onClick={() => setViewerState(null)}>
+          <div className="lightbox__content" onClick={(event) => event.stopPropagation()}>
+            <button className="lightbox__close" onClick={() => setViewerState(null)}>
+              ×
+            </button>
+            <button
+              className="lightbox__nav lightbox__nav--prev"
+              onClick={() =>
+                setViewerState((prev) =>
+                  prev
+                    ? { ...prev, index: prev.index === 0 ? prev.images.length - 1 : prev.index - 1 }
+                    : prev
+                )
+              }
+            >
+              ‹
+            </button>
+            <img
+              className="lightbox__image"
+              src={viewerState.images[viewerState.index].src}
+              alt={viewerState.images[viewerState.index].alt}
+              onError={handleImageFallback}
+            />
+            <button
+              className="lightbox__nav lightbox__nav--next"
+              onClick={() =>
+                setViewerState((prev) =>
+                  prev
+                    ? { ...prev, index: prev.index === prev.images.length - 1 ? 0 : prev.index + 1 }
+                    : prev
+                )
+              }
+            >
+              ›
+            </button>
+            <p className="lightbox__caption">
+              {viewerState.title} — {viewerState.index + 1} / {viewerState.images.length}
+            </p>
           </div>
         </div>
       )}

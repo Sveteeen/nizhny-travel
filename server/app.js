@@ -17,6 +17,13 @@ app.use('/uploads', express.static(uploadsRoot));
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+app.get('/api/config/public', (req, res) => {
+  res.json({
+    yandexMapsApiKey: process.env.YANDEX_MAPS_API_KEY || null,
+  });
+});
+
 app.use('/api', placeRoutes);
 app.use('/api', routeRoutes);
 app.use('/api', favoriteRoutes);
