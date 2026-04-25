@@ -14,6 +14,7 @@ const swaggerDocument = {
   ],
   tags: [
     { name: 'Places' },
+    { name: 'Routes' },
     { name: 'Favorites' },
     { name: 'Upload' },
   ],
@@ -89,6 +90,52 @@ const swaggerDocument = {
         },
       },
     },
+    '/api/routes': {
+      get: {
+        tags: ['Routes'],
+        summary: 'Get predefined routes list',
+        responses: {
+          200: {
+            description: 'Routes list',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'array',
+                  items: { $ref: '#/components/schemas/RouteListItem' },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/routes/{id}': {
+      get: {
+        tags: ['Routes'],
+        summary: 'Get route with ordered points',
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'integer' },
+          },
+        ],
+        responses: {
+          200: {
+            description: 'Route details with points',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/RouteDetails' },
+              },
+            },
+          },
+          404: {
+            description: 'Route not found',
+          },
+        },
+      },
+    },
     '/api/favorites/{placeId}': {
       delete: {
         tags: ['Favorites'],
@@ -110,6 +157,55 @@ const swaggerDocument = {
         responses: {
           204: { description: 'Removed from favorites' },
           404: { description: 'Favorite not found' },
+        },
+      },
+    },
+    '/api/favorite-route/{id}': {
+      post: {
+        tags: ['Favorites'],
+        summary: 'Add route to favorites',
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'integer' },
+          },
+          {
+            name: 'x-user-id',
+            in: 'header',
+            required: false,
+            schema: { type: 'integer', example: 2 },
+          },
+        ],
+        responses: {
+          201: { description: 'Added to favorite routes' },
+          200: { description: 'Already in favorite routes' },
+          404: { description: 'Route not found' },
+        },
+      },
+    },
+    '/api/favorite-routes/{routeId}': {
+      delete: {
+        tags: ['Favorites'],
+        summary: 'Remove route from favorites',
+        parameters: [
+          {
+            name: 'routeId',
+            in: 'path',
+            required: true,
+            schema: { type: 'integer' },
+          },
+          {
+            name: 'x-user-id',
+            in: 'header',
+            required: false,
+            schema: { type: 'integer', example: 2 },
+          },
+        ],
+        responses: {
+          204: { description: 'Removed from favorite routes' },
+          404: { description: 'Favorite route not found' },
         },
       },
     },
@@ -202,6 +298,49 @@ const swaggerDocument = {
           tags: {
             type: 'array',
             items: { $ref: '#/components/schemas/Tag' },
+          },
+        },
+      },
+      RouteListItem: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer' },
+          name: { type: 'string' },
+          description: { type: 'string' },
+          duration_minutes: { type: 'number' },
+          distance_km: { type: 'number' },
+          main_photo: { type: 'string' },
+        },
+      },
+      RoutePoint: {
+        type: 'object',
+        properties: {
+          order_index: { type: 'integer' },
+          place: {
+            type: 'object',
+            properties: {
+              id: { type: 'integer' },
+              name: { type: 'string' },
+              address: { type: 'string' },
+              latitude: { type: 'number' },
+              longitude: { type: 'number' },
+              main_photo: { type: 'string' },
+            },
+          },
+        },
+      },
+      RouteDetails: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer' },
+          name: { type: 'string' },
+          description: { type: 'string' },
+          duration_minutes: { type: 'number' },
+          distance_km: { type: 'number' },
+          main_photo: { type: 'string' },
+          points: {
+            type: 'array',
+            items: { $ref: '#/components/schemas/RoutePoint' },
           },
         },
       },
