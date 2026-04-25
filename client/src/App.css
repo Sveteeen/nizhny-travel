@@ -9,12 +9,38 @@
   margin-bottom: 24px;
 }
 
+.hero__top {
+  display: block;
+}
+
 .hero__eyebrow {
   margin: 0;
   color: #8fb2ff;
   font-size: 14px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.profile-button {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 20;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid #2d456f;
+  background: #14223b;
+  color: #d9e7ff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 22px rgba(5, 8, 15, 0.35);
+}
+
+.profile-button__icon {
+  font-size: 18px;
+  line-height: 1;
 }
 
 .hero h1 {
@@ -70,11 +96,39 @@
 }
 
 .card {
+  position: relative;
   overflow: hidden;
   border-radius: 16px;
   border: 1px solid #2d446f;
   background: linear-gradient(180deg, #131f35, #0f1829);
   box-shadow: 0 14px 28px rgba(5, 8, 15, 0.4);
+}
+
+.card__favorite {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 1px solid #3f5f94;
+  background: rgba(18, 30, 52, 0.88);
+  color: #cfe0ff;
+  font-size: 16px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 20px rgba(5, 8, 15, 0.45);
+}
+
+.card__favorite--active {
+  color: #ff5f85;
+  border-color: #ff8fa8;
+  background: rgba(51, 19, 33, 0.9);
 }
 
 .card__image {
@@ -114,18 +168,6 @@
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-}
-
-.like-button {
-  border: 1px solid #39588f;
-  background: #14243f;
-  color: #c6dcff;
-}
-
-.like-button--active {
-  background: #2e4f96;
-  border-color: #7ea6ff;
-  color: #fff;
 }
 
 .card--skeleton {

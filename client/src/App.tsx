@@ -277,7 +277,7 @@ const PlacesOverviewMap = ({ apiKey, places }: PlacesOverviewMapProps) => {
 }
 
 function App() {
-  const [activeTab, setActiveTab] = useState<'places' | 'routes' | 'map'>('places')
+  const [activeTab, setActiveTab] = useState<'places' | 'routes' | 'map' | 'planner'>('places')
   const [places, setPlaces] = useState<PlaceListItem[]>([])
   const [routes, setRoutes] = useState<RouteListItem[]>([])
   const [placeDetails, setPlaceDetails] = useState<PlaceDetails | null>(null)
@@ -418,7 +418,14 @@ function App() {
   return (
     <div className="app">
       <header className="hero">
-        <p className="hero__eyebrow">Городские маршруты и точки интереса</p>
+        <div className="hero__top">
+          <p className="hero__eyebrow">Городские маршруты и точки интереса</p>
+          <button className="profile-button" type="button" aria-label="Личный кабинет" title="Личный кабинет">
+            <span className="profile-button__icon" aria-hidden>
+              👤
+            </span>
+          </button>
+        </div>
         <h1>Туристический гид по Нижнему Новгороду</h1>
         <p className="hero__description">
           Современный гид с красивыми карточками, маршрутами и подробными описаниями мест.
@@ -440,6 +447,12 @@ function App() {
         </button>
         <button className={`tab ${activeTab === 'map' ? 'tab--active' : ''}`} onClick={() => setActiveTab('map')}>
           Карта
+        </button>
+        <button
+          className={`tab ${activeTab === 'planner' ? 'tab--active' : ''}`}
+          onClick={() => setActiveTab('planner')}
+        >
+          Планировщик маршрутов
         </button>
       </section>
 
@@ -463,6 +476,15 @@ function App() {
         <section className="grid">
           {places.map((place) => (
             <article className="card" key={place.id}>
+              <button
+                className={`card__favorite ${favoritePlaceIds.has(place.id) ? 'card__favorite--active' : ''}`}
+                onClick={() => togglePlaceFavorite(place.id)}
+                disabled={favoritesLoading === place.id}
+                aria-label={favoritePlaceIds.has(place.id) ? 'Убрать из избранного' : 'Добавить в избранное'}
+                title={favoritePlaceIds.has(place.id) ? 'Убрать из избранного' : 'Добавить в избранное'}
+              >
+                {favoritePlaceIds.has(place.id) ? '♥' : '♡'}
+              </button>
               <img src={normalizeImageUrl(place.main_photo)} alt={place.name} className="card__image" />
               <div className="card__body">
                 <p className="card__meta">{place.category?.name ?? 'Без категории'}</p>
@@ -470,13 +492,6 @@ function App() {
                 <div className="card__actions">
                   <button className="card__button" onClick={() => openPlaceDetails(place.id)}>
                     Подробнее
-                  </button>
-                  <button
-                    className={`like-button ${favoritePlaceIds.has(place.id) ? 'like-button--active' : ''}`}
-                    onClick={() => togglePlaceFavorite(place.id)}
-                    disabled={favoritesLoading === place.id}
-                  >
-                    {favoritePlaceIds.has(place.id) ? 'В избранном' : 'В избранное'}
                   </button>
                 </div>
               </div>
@@ -489,6 +504,15 @@ function App() {
         <section className="grid">
           {routes.map((route) => (
             <article className="card" key={route.id}>
+              <button
+                className={`card__favorite ${favoriteRouteIds.has(route.id) ? 'card__favorite--active' : ''}`}
+                onClick={() => toggleRouteFavorite(route.id)}
+                disabled={favoriteRoutesLoading === route.id}
+                aria-label={favoriteRouteIds.has(route.id) ? 'Убрать из избранного' : 'Добавить в избранное'}
+                title={favoriteRouteIds.has(route.id) ? 'Убрать из избранного' : 'Добавить в избранное'}
+              >
+                {favoriteRouteIds.has(route.id) ? '♥' : '♡'}
+              </button>
               <img
                 src={normalizeImageUrl(route.main_photo)}
                 alt={route.name}
@@ -504,13 +528,6 @@ function App() {
                 <div className="card__actions">
                   <button className="card__button" onClick={() => openRouteDetails(route.id)}>
                     Открыть маршрут
-                  </button>
-                  <button
-                    className={`like-button ${favoriteRouteIds.has(route.id) ? 'like-button--active' : ''}`}
-                    onClick={() => toggleRouteFavorite(route.id)}
-                    disabled={favoriteRoutesLoading === route.id}
-                  >
-                    {favoriteRouteIds.has(route.id) ? 'В избранном' : 'В избранное'}
                   </button>
                 </div>
               </div>
@@ -530,6 +547,12 @@ function App() {
           ) : (
             <div className="map map--big map--fallback">Не настроен ключ Яндекс.Карт</div>
           )}
+        </section>
+      )}
+
+      {!loading && !error && activeTab === 'planner' && (
+        <section className="state">
+          Планировщик маршрутов скоро появится. Сейчас раздел в разработке и ожидает бэкенд.
         </section>
       )}
 
