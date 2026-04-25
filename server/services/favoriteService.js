@@ -1,4 +1,4 @@
-const { Place, FavouritePlace } = require('../db/models');
+const { Place, Route, FavouritePlace, FavouriteRoute } = require('../db/models');
 
 const addPlaceToFavorites = async ({ userId, placeId }) => {
   const place = await Place.findByPk(placeId, { attributes: ['id'] });
@@ -29,7 +29,38 @@ const removePlaceFromFavorites = async ({ userId, placeId }) => {
   return deleted > 0;
 };
 
+const addRouteToFavorites = async ({ userId, routeId }) => {
+  const route = await Route.findByPk(routeId, { attributes: ['id'] });
+  if (!route) {
+    return { status: 'route_not_found' };
+  }
+
+  const [favorite, created] = await FavouriteRoute.findOrCreate({
+    where: { user_id: userId, route_id: routeId },
+    defaults: { user_id: userId, route_id: routeId },
+  });
+
+  return {
+    status: created ? 'created' : 'exists',
+    favorite: {
+      id: favorite.id,
+      user_id: favorite.user_id,
+      route_id: favorite.route_id,
+    },
+  };
+};
+
+const removeRouteFromFavorites = async ({ userId, routeId }) => {
+  const deleted = await FavouriteRoute.destroy({
+    where: { user_id: userId, route_id: routeId },
+  });
+
+  return deleted > 0;
+};
+
 module.exports = {
   addPlaceToFavorites,
   removePlaceFromFavorites,
+  addRouteToFavorites,
+  removeRouteFromFavorites,
 };

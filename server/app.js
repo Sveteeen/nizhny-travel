@@ -3,6 +3,7 @@ const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
 const swaggerDocument = require('./docs/swagger');
 const placeRoutes = require('./routes/placeRoutes');
+const routeRoutes = require('./routes/routeRoutes');
 const favoriteRoutes = require('./routes/favoriteRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const { uploadsRoot } = require('./services/uploadService');
@@ -17,6 +18,7 @@ app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 app.use('/api', placeRoutes);
+app.use('/api', routeRoutes);
 app.use('/api', favoriteRoutes);
 app.use('/api', uploadRoutes);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
