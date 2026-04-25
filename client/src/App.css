@@ -82,6 +82,7 @@
   height: 172px;
   object-fit: cover;
   display: block;
+  cursor: pointer;
 }
 
 .card__body {
@@ -214,6 +215,7 @@
   max-height: 280px;
   object-fit: cover;
   border-radius: 12px;
+  cursor: zoom-in;
 }
 
 .modal__meta {
@@ -247,6 +249,7 @@
   height: 110px;
   object-fit: cover;
   border-radius: 10px;
+  cursor: zoom-in;
 }
 
 .map-wrap {
@@ -258,6 +261,13 @@
   height: 240px;
   border-radius: 12px;
   border: 1px solid #2d456f;
+}
+
+.map--fallback {
+  display: grid;
+  place-items: center;
+  color: #94acd8;
+  background: #142238;
 }
 
 .route-points {
@@ -295,4 +305,70 @@
   margin: 2px 0 0;
   color: #b3c6e9;
   font-size: 14px;
+}
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  background: rgba(4, 7, 14, 0.9);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.lightbox__content {
+  position: relative;
+  width: min(1120px, 95vw);
+}
+
+.lightbox__image {
+  width: 100%;
+  max-height: 82vh;
+  object-fit: contain;
+  border-radius: 12px;
+  background: #050a14;
+}
+
+.lightbox__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 0;
+  background: rgba(20, 32, 58, 0.85);
+  color: #fff;
+  font-size: 20px;
+  z-index: 2;
+}
+
+.lightbox__nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(20, 32, 58, 0.8);
+  color: #fff;
+  font-size: 30px;
+  line-height: 1;
+  z-index: 2;
+}
+
+.lightbox__nav--prev {
+  left: 10px;
+}
+
+.lightbox__nav--next {
+  right: 10px;
+}
+
+.lightbox__caption {
+  margin: 10px 0 0;
+  text-align: center;
+  color: #c7d8ff;
 }
