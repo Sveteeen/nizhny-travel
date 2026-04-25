@@ -12,3 +12,14 @@ build/
 # IDE
 .vscode/
 .idea/
+
+# local uploads
+server/uploads/*
+!server/uploads/places/
+!server/uploads/places/main/
+!server/uploads/places/main/.gitkeep
+!server/uploads/places/gallery/
+!server/uploads/places/gallery/.gitkeep
+!server/uploads/routes/
+!server/uploads/routes/main/
+!server/uploads/routes/main/.gitkeep

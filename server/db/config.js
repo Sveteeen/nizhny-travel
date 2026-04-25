@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const common = {
   username: process.env.PGUSER,
   password: process.env.PGPASSWORD,
