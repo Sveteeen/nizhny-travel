@@ -419,7 +419,7 @@ function App() {
     <div className="app">
       <header className="hero">
         <div className="hero__top">
-          <p className="hero__eyebrow">Городские маршруты и точки интереса</p>
+          <p className="hero__eyebrow">Выбери свой путь знакомства с городом</p>
           <button className="profile-button" type="button" aria-label="Личный кабинет" title="Личный кабинет">
             <span className="profile-button__icon" aria-hidden>
               👤
@@ -428,7 +428,7 @@ function App() {
         </div>
         <h1>Туристический гид по Нижнему Новгороду</h1>
         <p className="hero__description">
-          Современный гид с красивыми карточками, маршрутами и подробными описаниями мест.
+          Подборка мест и маршрутов по любым запросам
         </p>
       </header>
 
@@ -473,67 +473,102 @@ function App() {
       {error && <div className="state state--error">{error}</div>}
 
       {!loading && !error && activeTab === 'places' && (
-        <section className="grid">
-          {places.map((place) => (
-            <article className="card" key={place.id}>
-              <button
-                className={`card__favorite ${favoritePlaceIds.has(place.id) ? 'card__favorite--active' : ''}`}
-                onClick={() => togglePlaceFavorite(place.id)}
-                disabled={favoritesLoading === place.id}
-                aria-label={favoritePlaceIds.has(place.id) ? 'Убрать из избранного' : 'Добавить в избранное'}
-                title={favoritePlaceIds.has(place.id) ? 'Убрать из избранного' : 'Добавить в избранное'}
-              >
-                {favoritePlaceIds.has(place.id) ? '♥' : '♡'}
-              </button>
-              <img src={normalizeImageUrl(place.main_photo)} alt={place.name} className="card__image" />
-              <div className="card__body">
-                <p className="card__meta">{place.category?.name ?? 'Без категории'}</p>
-                <h3>{place.name}</h3>
-                <div className="card__actions">
-                  <button className="card__button" onClick={() => openPlaceDetails(place.id)}>
-                    Подробнее
-                  </button>
+        <>
+          <section className="filters">
+            <input
+              className="filters__control"
+              type="search"
+              placeholder="Поиск достопримечательностей"
+              aria-label="Поиск достопримечательностей"
+            />
+            <select className="filters__control" aria-label="Фильтр по категории достопримечательностей" defaultValue="">
+              <option value="" disabled>
+                Категория
+              </option>
+            </select>
+            <select className="filters__control" aria-label="Фильтр по тегам достопримечательностей" defaultValue="">
+              <option value="" disabled>
+                Теги
+              </option>
+            </select>
+          </section>
+          <section className="grid">
+            {places.map((place) => (
+              <article className="card" key={place.id}>
+                <button
+                  className={`card__favorite ${favoritePlaceIds.has(place.id) ? 'card__favorite--active' : ''}`}
+                  onClick={() => togglePlaceFavorite(place.id)}
+                  disabled={favoritesLoading === place.id}
+                  aria-label={favoritePlaceIds.has(place.id) ? 'Убрать из избранного' : 'Добавить в избранное'}
+                  title={favoritePlaceIds.has(place.id) ? 'Убрать из избранного' : 'Добавить в избранное'}
+                >
+                  {favoritePlaceIds.has(place.id) ? '♥' : '♡'}
+                </button>
+                <img src={normalizeImageUrl(place.main_photo)} alt={place.name} className="card__image" />
+                <div className="card__body">
+                  <p className="card__meta">{place.category?.name ?? 'Без категории'}</p>
+                  <h3>{place.name}</h3>
+                  <div className="card__actions">
+                    <button className="card__button" onClick={() => openPlaceDetails(place.id)}>
+                      Подробнее
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </article>
-          ))}
-        </section>
+              </article>
+            ))}
+          </section>
+        </>
       )}
 
       {!loading && !error && activeTab === 'routes' && (
-        <section className="grid">
-          {routes.map((route) => (
-            <article className="card" key={route.id}>
-              <button
-                className={`card__favorite ${favoriteRouteIds.has(route.id) ? 'card__favorite--active' : ''}`}
-                onClick={() => toggleRouteFavorite(route.id)}
-                disabled={favoriteRoutesLoading === route.id}
-                aria-label={favoriteRouteIds.has(route.id) ? 'Убрать из избранного' : 'Добавить в избранное'}
-                title={favoriteRouteIds.has(route.id) ? 'Убрать из избранного' : 'Добавить в избранное'}
-              >
-                {favoriteRouteIds.has(route.id) ? '♥' : '♡'}
-              </button>
-              <img
-                src={normalizeImageUrl(route.main_photo)}
-                alt={route.name}
-                className="card__image"
-                onError={handleImageFallback}
-              />
-              <div className="card__body">
-                <p className="card__meta">
-                  {formatDuration(route.duration_minutes)} • {formatDistance(route.distance_km)}
-                </p>
-                <h3>{route.name}</h3>
-                <p className="card__text">{route.description}</p>
-                <div className="card__actions">
-                  <button className="card__button" onClick={() => openRouteDetails(route.id)}>
-                    Открыть маршрут
-                  </button>
+        <>
+          <section className="filters">
+            <input className="filters__control" type="search" placeholder="Поиск маршрутов" aria-label="Поиск маршрутов" />
+            <select className="filters__control" aria-label="Фильтр по категории маршрутов" defaultValue="">
+              <option value="" disabled>
+                Категория
+              </option>
+            </select>
+            <select className="filters__control" aria-label="Фильтр по тегам маршрутов" defaultValue="">
+              <option value="" disabled>
+                Теги
+              </option>
+            </select>
+          </section>
+          <section className="grid">
+            {routes.map((route) => (
+              <article className="card" key={route.id}>
+                <button
+                  className={`card__favorite ${favoriteRouteIds.has(route.id) ? 'card__favorite--active' : ''}`}
+                  onClick={() => toggleRouteFavorite(route.id)}
+                  disabled={favoriteRoutesLoading === route.id}
+                  aria-label={favoriteRouteIds.has(route.id) ? 'Убрать из избранного' : 'Добавить в избранное'}
+                  title={favoriteRouteIds.has(route.id) ? 'Убрать из избранного' : 'Добавить в избранное'}
+                >
+                  {favoriteRouteIds.has(route.id) ? '♥' : '♡'}
+                </button>
+                <img
+                  src={normalizeImageUrl(route.main_photo)}
+                  alt={route.name}
+                  className="card__image"
+                  onError={handleImageFallback}
+                />
+                <div className="card__body">
+                  <p className="card__meta">
+                    {formatDuration(route.duration_minutes)} • {formatDistance(route.distance_km)}
+                  </p>
+                  <h3>{route.name}</h3>
+                  <p className="card__text">{route.description}</p>
+                  <div className="card__actions">
+                    <button className="card__button" onClick={() => openRouteDetails(route.id)}>
+                      Открыть маршрут
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </article>
-          ))}
-        </section>
+              </article>
+            ))}
+          </section>
+        </>
       )}
 
       {!loading && !error && activeTab === 'map' && (
