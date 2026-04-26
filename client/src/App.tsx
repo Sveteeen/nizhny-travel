@@ -240,6 +240,21 @@ const PlacesOverviewMap = ({ apiKey, places }: PlacesOverviewMapProps) => {
           if (Number.isNaN(latitude) || Number.isNaN(longitude)) return
           bounds.push([latitude, longitude])
 
+          const imageUrl = normalizeImageUrl(place.main_photo)
+          const markerLayout = window.ymaps.templateLayoutFactory.createClass(`
+            <div style="
+              width: 56px;
+              height: 56px;
+              border-radius: 50%;
+              border: 2px solid #e9f2ff;
+              box-shadow: 0 8px 16px rgba(9, 15, 28, 0.45);
+              background-image: url('${imageUrl}');
+              background-size: cover;
+              background-position: center;
+              background-repeat: no-repeat;
+            "></div>
+          `)
+
           const marker = new window.ymaps.Placemark(
             [latitude, longitude],
             {
@@ -247,7 +262,15 @@ const PlacesOverviewMap = ({ apiKey, places }: PlacesOverviewMapProps) => {
               balloonContentHeader: place.name,
               balloonContentBody: place.address,
             },
-            { preset: 'islands#blueIcon' }
+            {
+              iconLayout: markerLayout,
+              iconShape: {
+                type: 'Circle',
+                coordinates: [28, 28],
+                radius: 28,
+              },
+              iconOffset: [-28, -28],
+            }
           )
           mapInstanceRef.current.geoObjects.add(marker)
         })
