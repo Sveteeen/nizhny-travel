@@ -1,5 +1,4 @@
 const { Sequelize, DataTypes } = require('sequelize');
-const env = process.env.NODE_ENV || 'development';
 const config = require('../config.js');
 
 const sequelize = new Sequelize(
@@ -10,10 +9,11 @@ const sequelize = new Sequelize(
     host: config.host,
     port: config.port,
     dialect: config.dialect,
-    logging: env === 'development' ? console.log : false,
+    logging: false,
   }
 );
 
+//импортируем функцию создания модели и сразу ее создаем
 const Role = require('./role')(sequelize, DataTypes);
 const User = require('./user')(sequelize, DataTypes);
 const Category = require('./category')(sequelize, DataTypes);
