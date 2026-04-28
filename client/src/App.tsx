@@ -187,7 +187,12 @@ function App() {
             <p>На карте отображены все точки из базы данных. Нажми на маркер, чтобы увидеть название и адрес.</p>
           </div>
           {yandexApiKey ? (
-            <PlacesOverviewMap apiKey={yandexApiKey} places={places} normalizeImageUrl={normalizeImageUrl} />
+            <PlacesOverviewMap
+              apiKey={yandexApiKey}
+              places={places}
+              normalizeImageUrl={normalizeImageUrl}
+              onOpenDetails={openPlaceDetails}
+            />
           ) : (
             <div className="map map--big map--fallback">Не настроен ключ Яндекс.Карт</div>
           )}

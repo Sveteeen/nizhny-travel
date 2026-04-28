@@ -6,9 +6,10 @@ type PlacesOverviewMapProps = {
   apiKey: string
   places: PlaceListItem[]
   normalizeImageUrl: (value: string) => string
+  onOpenDetails: (id: number) => void
 }
 
-export const PlacesOverviewMap = ({ apiKey, places, normalizeImageUrl }: PlacesOverviewMapProps) => {
+export const PlacesOverviewMap = ({ apiKey, places, normalizeImageUrl, onOpenDetails }: PlacesOverviewMapProps) => {
   const mapRef = useRef<HTMLDivElement | null>(null)
   const mapInstanceRef = useRef<any>(null)
 
@@ -65,6 +66,7 @@ export const PlacesOverviewMap = ({ apiKey, places, normalizeImageUrl }: PlacesO
               iconOffset: [-28, -28],
             }
           )
+          marker.events.add('click', () => onOpenDetails(place.id))
           mapInstanceRef.current.geoObjects.add(marker)
         })
 
@@ -100,7 +102,7 @@ export const PlacesOverviewMap = ({ apiKey, places, normalizeImageUrl }: PlacesO
       mapInstanceRef.current?.destroy()
       mapInstanceRef.current = null
     }
-  }, [apiKey, places, normalizeImageUrl])
+  }, [apiKey, places, normalizeImageUrl, onOpenDetails])
 
   return <div className="map map--big" ref={mapRef} />
 }
