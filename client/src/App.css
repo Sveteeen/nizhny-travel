@@ -471,3 +471,103 @@
   text-align: center;
   color: #c7d8ff;
 }
+
+.account-modal {
+  width: min(500px, 96vw);
+}
+
+.account-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.account-modal__header h2 {
+  margin: 0;
+}
+
+.settings-button {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  border-radius: 50%;
+  border: 1px solid #365588;
+  background: #1a2b4a;
+  color: #f3f7ff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  font-size: 14px;
+  padding: 0;
+}
+
+.settings-button--top {
+  position: absolute;
+  top: 12px;
+  right: 48px;
+  z-index: 2;
+}
+
+.settings-button--active {
+  border-color: #6f9dff;
+  background: #22437a;
+}
+
+.account-modal__tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.account-form {
+  display: grid;
+  gap: 10px;
+}
+
+.account-form__submit {
+  padding: 10px 12px;
+  border-radius: 10px;
+  margin-top: 2px;
+}
+
+.account-modal__state {
+  margin: 0 0 12px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #2e4a76;
+  background: #13233d;
+  color: #cfe1ff;
+}
+
+.account-modal__state--error {
+  border-color: #8e4a63;
+  background: #311926;
+}
+
+.account-modal__profile {
+  display: grid;
+  gap: 8px;
+}
+
+.account-modal__name {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.account-modal__email {
+  margin: 0;
+  color: #a6bde5;
+}
+
+.account-modal__logout {
+  border: 1px solid #3f5f94;
+  border-radius: 10px;
+  background: #162746;
+  color: #dbe8ff;
+  padding: 8px 12px;
+}

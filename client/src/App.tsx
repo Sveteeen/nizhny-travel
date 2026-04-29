@@ -1,5 +1,6 @@
 import './App.css'
 import { useMemo, useState, type SyntheticEvent } from 'react'
+import { AccountModal } from './components/account/AccountModal'
 import { DetailsModal } from './components/DetailsModal'
 import { FiltersBar } from './components/FiltersBar'
 import { Lightbox } from './components/Lightbox'
@@ -10,6 +11,7 @@ import { useTravelData } from './hooks/useTravelData'
 import type { ViewerState } from './types'
 
 const DEFAULT_ROUTE_COVER = 'http://localhost:5000/uploads/places/main/kremlin.png'
+const STORAGE_KEY = 'travel-app-user'
 
 const normalizeImageUrl = (value: string) => {
   if (!value) return value
@@ -26,6 +28,20 @@ const handleImageFallback = (event: SyntheticEvent<HTMLImageElement, Event>) => 
 function App() {
   const [activeTab, setActiveTab] = useState<'places' | 'routes' | 'map' | 'planner'>('places')
   const [viewerState, setViewerState] = useState<ViewerState | null>(null)
+  const [isAccountOpen, setIsAccountOpen] = useState(false)
+  const [currentUser, setCurrentUser] = useState<{ name: string; email: string } | null>(() => {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return null
+    try {
+      const parsed = JSON.parse(raw) as { name?: string; email?: string }
+      if (parsed?.name && parsed?.email) {
+        return { name: parsed.name, email: parsed.email }
+      }
+    } catch {
+      // ignore broken local profile
+    }
+    return null
+  })
   const {
     places,
     routes,
@@ -77,7 +93,13 @@ function App() {
       <header className="hero">
         <div className="hero__top">
           <p className="hero__eyebrow">Выбери свой путь знакомства с городом</p>
-          <button className="profile-button" type="button" aria-label="Личный кабинет" title="Личный кабинет">
+          <button
+            className="profile-button"
+            type="button"
+            aria-label="Личный кабинет"
+            title="Личный кабинет"
+            onClick={() => setIsAccountOpen(true)}
+          >
             <span className="profile-button__icon" aria-hidden>
               👤
             </span>
@@ -241,6 +263,16 @@ function App() {
                 : prev
             )
           }
+        />
+      )}
+
+      {isAccountOpen && (
+        <AccountModal
+          user={currentUser}
+          onClose={() => setIsAccountOpen(false)}
+          onAuthSuccess={(user) => setCurrentUser(user)}
+          onLogout={() => setCurrentUser(null)}
+          onUpdateProfile={(user) => setCurrentUser(user)}
         />
       )}
     </div>
