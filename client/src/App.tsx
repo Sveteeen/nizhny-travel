@@ -28,6 +28,7 @@ const handleImageFallback = (event: SyntheticEvent<HTMLImageElement, Event>) => 
 function App() {
   const [activeTab, setActiveTab] = useState<'places' | 'routes' | 'map' | 'planner'>('places')
   const [viewerState, setViewerState] = useState<ViewerState | null>(null)
+  const [showFavoritePlacesOnly, setShowFavoritePlacesOnly] = useState(false)
   const [isAccountOpen, setIsAccountOpen] = useState(false)
   const [currentUser, setCurrentUser] = useState<{ name: string; email: string } | null>(() => {
     const raw = localStorage.getItem(STORAGE_KEY)
@@ -87,6 +88,11 @@ function App() {
       })),
     ]
   }, [placeDetails])
+
+  const visiblePlaces = useMemo(
+    () => (showFavoritePlacesOnly ? places.filter((place) => favoritePlaceIds.has(place.id)) : places),
+    [showFavoritePlacesOnly, places, favoritePlaceIds]
+  )
 
   return (
     <div className="app">
@@ -158,9 +164,25 @@ function App() {
             searchLabel="Поиск достопримечательностей"
             categoryLabel="Фильтр по категории достопримечательностей"
             tagsLabel="Фильтр по тегам достопримечательностей"
+            extraControl={
+              <label className="favorite-switch" htmlFor="favorites-only-places">
+                <span className="favorite-switch__label">Избранное</span>
+                <input
+                  id="favorites-only-places"
+                  className="favorite-switch__input"
+                  type="checkbox"
+                  checked={showFavoritePlacesOnly}
+                  onChange={(event) => setShowFavoritePlacesOnly(event.target.checked)}
+                />
+                <span className="favorite-switch__slider" aria-hidden />
+              </label>
+            }
           />
+          {showFavoritePlacesOnly && visiblePlaces.length === 0 && (
+            <div className="state">Пока нет избранных достопримечательностей.</div>
+          )}
           <section className="grid">
-            {places.map((place) => (
+            {visiblePlaces.map((place) => (
               <PlaceCard
                 key={place.id}
                 place={place}
