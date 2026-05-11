@@ -2,7 +2,8 @@ const routeService = require('../services/routeService');
 
 const getRoutes = async (req, res, next) => {
   try {
-    const routes = await routeService.getRoutes();
+    const filter = req.query;
+    const routes = await routeService.getRoutes(filter);
     return res.json(routes);
   } catch (err) {
     return next(err);

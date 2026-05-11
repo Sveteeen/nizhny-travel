@@ -1,7 +1,20 @@
+const { Op } = require('sequelize');
 const { Route, RoutePlace, Place } = require('../db/models');
 
-const getRoutes = async () => {
+const getRoutes = async (filter = {}) => {
+  const { search, category = [], tag = [] } = filter;
+  const whereParams = {};
+
+  if (search) {
+    const pattern = `%${search.trim()}%`;
+    whereParams[Op.or] = [
+      { name: { [Op.iLike]: pattern }},
+      { description: { [Op.iLike]: pattern }},
+    ];
+  }
+
   const routes = await Route.findAll({
+    where: whereParams,
     attributes: ['id', 'name', 'description', 'duration_minutes', 'distance_km', 'main_photo'],
     order: [['id', 'ASC']],
   });

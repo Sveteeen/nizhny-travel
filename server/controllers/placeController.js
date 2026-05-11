@@ -2,7 +2,8 @@ const placeService = require('../services/placeService');
 
 const getPlaces = async (req, res, next) => {
   try {
-    const places = await placeService.getAllPlaces();
+    const filter = req.query;
+    const places = await placeService.getAllPlaces(filter);
     return res.json(places);
   } catch (err) {
     return next(err);

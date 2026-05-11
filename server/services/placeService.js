@@ -1,7 +1,20 @@
+const { Op } = require('sequelize');
 const { Place, Category, PlacePhoto, TagPlace, Tag } = require('../db/models');
 
-const getAllPlaces = async () => {
+const getAllPlaces = async (filter = {}) => {
+  const { search, category = [], tag = [] } = filter;
+  const whereParams = {};
+
+  if (search) {
+    const pattern = `%${search.trim()}%`;
+    whereParams[Op.or] = [
+      { name: { [Op.iLike]: pattern } },
+      { description: { [Op.iLike]: pattern } },
+    ];
+  }  
+
   const places = await Place.findAll({
+    where: whereParams,
     attributes: ['id', 'name', 'address', 'latitude', 'longitude', 'main_photo'],
     include: [
       {
