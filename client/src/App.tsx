@@ -29,6 +29,7 @@ function App() {
   const [activeTab, setActiveTab] = useState<'places' | 'routes' | 'map' | 'planner'>('places')
   const [viewerState, setViewerState] = useState<ViewerState | null>(null)
   const [showFavoritePlacesOnly, setShowFavoritePlacesOnly] = useState(false)
+  const [showFavoriteRoutesOnly, setShowFavoriteRoutesOnly] = useState(false)
   const [isAccountOpen, setIsAccountOpen] = useState(false)
   const [currentUser, setCurrentUser] = useState<{ name: string; email: string } | null>(() => {
     const raw = localStorage.getItem(STORAGE_KEY)
@@ -92,6 +93,11 @@ function App() {
   const visiblePlaces = useMemo(
     () => (showFavoritePlacesOnly ? places.filter((place) => favoritePlaceIds.has(place.id)) : places),
     [showFavoritePlacesOnly, places, favoritePlaceIds]
+  )
+
+  const visibleRoutes = useMemo(
+    () => (showFavoriteRoutesOnly ? routes.filter((route) => favoriteRouteIds.has(route.id)) : routes),
+    [showFavoriteRoutesOnly, routes, favoriteRouteIds]
   )
 
   return (
@@ -204,9 +210,25 @@ function App() {
             searchLabel="Поиск маршрутов"
             categoryLabel="Фильтр по категории маршрутов"
             tagsLabel="Фильтр по тегам маршрутов"
+            extraControl={
+              <label className="favorite-switch" htmlFor="favorites-only-routes">
+                <span className="favorite-switch__label">Избранное</span>
+                <input
+                  id="favorites-only-routes"
+                  className="favorite-switch__input"
+                  type="checkbox"
+                  checked={showFavoriteRoutesOnly}
+                  onChange={(event) => setShowFavoriteRoutesOnly(event.target.checked)}
+                />
+                <span className="favorite-switch__slider" aria-hidden />
+              </label>
+            }
           />
+          {showFavoriteRoutesOnly && visibleRoutes.length === 0 && (
+            <div className="state">Пока нет избранных маршрутов.</div>
+          )}
           <section className="grid">
-            {routes.map((route) => (
+            {visibleRoutes.map((route) => (
               <RouteCard
                 key={route.id}
                 route={route}
