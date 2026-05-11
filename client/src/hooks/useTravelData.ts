@@ -119,6 +119,26 @@ export const useTravelData = () => {
     setRouteDetails(null)
   }
 
+  const searchPlaces = async (query: string) => {
+    try {
+      const params = query.trim() ? { search: query.trim() } : undefined
+      const { data } = await axios.get<PlaceListItem[]>(`${API_URL}/places`, { params })
+      setPlaces(data)
+    } catch {
+      setError('Не удалось выполнить поиск мест.')
+    }
+  }
+
+  const searchRoutes = async (query: string) => {
+    try {
+      const params = query.trim() ? { search: query.trim() } : undefined
+      const { data } = await axios.get<RouteListItem[]>(`${API_URL}/routes`, { params })
+      setRoutes(data)
+    } catch {
+      setError('Не удалось выполнить поиск маршрутов.')
+    }
+  }
+
   return {
     places,
     routes,
@@ -137,5 +157,7 @@ export const useTravelData = () => {
     togglePlaceFavorite,
     toggleRouteFavorite,
     closeDetails,
+    searchPlaces,
+    searchRoutes,
   }
 }

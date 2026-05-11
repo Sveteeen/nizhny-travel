@@ -62,6 +62,8 @@ function App() {
     togglePlaceFavorite,
     toggleRouteFavorite,
     closeDetails,
+    searchPlaces,
+    searchRoutes,
   } = useTravelData()
 
   const openViewer = (images: { src: string; alt: string }[], startIndex: number, title: string) => {
@@ -170,6 +172,7 @@ function App() {
             searchLabel="Поиск достопримечательностей"
             categoryLabel="Фильтр по категории достопримечательностей"
             tagsLabel="Фильтр по тегам достопримечательностей"
+            onSearchChange={searchPlaces}
             extraControl={
               <label className="favorite-switch" htmlFor="favorites-only-places">
                 <span className="favorite-switch__label">Избранное</span>
@@ -210,6 +213,7 @@ function App() {
             searchLabel="Поиск маршрутов"
             categoryLabel="Фильтр по категории маршрутов"
             tagsLabel="Фильтр по тегам маршрутов"
+            onSearchChange={searchRoutes}
             extraControl={
               <label className="favorite-switch" htmlFor="favorites-only-routes">
                 <span className="favorite-switch__label">Избранное</span>
