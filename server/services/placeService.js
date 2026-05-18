@@ -2,7 +2,7 @@ const { Op } = require('sequelize');
 const { Place, Category, PlacePhoto, TagPlace, Tag } = require('../db/models');
 
 const getAllPlaces = async (filter = {}) => {
-  const { search, category = [], tag = [] } = filter;
+  const { search, category, tag } = filter;
   const whereParams = {};
 
   if (search) {
@@ -11,18 +11,33 @@ const getAllPlaces = async (filter = {}) => {
       { name: { [Op.iLike]: pattern } },
       { description: { [Op.iLike]: pattern } },
     ];
-  }  
+  }
+
+  const includeTables = [
+    {
+      model: Category,
+      as: 'category',
+      attributes: ['id', 'name'],
+    },
+  ];
+
+  if (category) {
+    whereParams.category_id = Number(category);
+  }
+
+  if (tag) {
+    includeTables.push({
+      model: TagPlace,
+      as: 'tag_links',
+      where: { tag_id: Number(tag) },
+      requiered: true,
+    });
+  }
 
   const places = await Place.findAll({
     where: whereParams,
     attributes: ['id', 'name', 'address', 'latitude', 'longitude', 'main_photo'],
-    include: [
-      {
-        model: Category,
-        as: 'category',
-        attributes: ['id', 'name'],
-      },
-    ],
+    include: includeTables,
     order: [['id', 'ASC']],
   });
 
