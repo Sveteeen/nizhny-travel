@@ -1,49 +1,57 @@
-import './App.css'
-import { useMemo, useState, type SyntheticEvent } from 'react'
-import { AccountModal } from './components/account/AccountModal'
-import { DetailsModal } from './components/DetailsModal'
-import { FiltersBar } from './components/FiltersBar'
-import { Lightbox } from './components/Lightbox'
-import { PlacesOverviewMap } from './components/maps/PlacesOverviewMap'
-import { PlaceCard } from './components/PlaceCard'
-import { RouteCard } from './components/RouteCard'
-import { useTravelData } from './hooks/useTravelData'
-import type { ViewerState } from './types'
+import "./App.css";
+import { useCallback, useMemo, useRef, useState, type SyntheticEvent } from "react";
+import { AccountModal } from "./components/account/AccountModal";
+import { DetailsModal } from "./components/DetailsModal";
+import { FiltersBar } from "./components/FiltersBar";
+import { Lightbox } from "./components/Lightbox";
+import { PlacesOverviewMap } from "./components/maps/PlacesOverviewMap";
+import { PlaceCard } from "./components/PlaceCard";
+import { RouteCard } from "./components/RouteCard";
+import { useTravelData } from "./hooks/useTravelData";
+import type { ViewerState } from "./types";
 
-const DEFAULT_ROUTE_COVER = 'http://localhost:5000/uploads/places/main/kremlin.png'
-const STORAGE_KEY = 'travel-app-user'
+const DEFAULT_ROUTE_COVER =
+  "http://localhost:5000/uploads/places/main/kremlin.png";
+const STORAGE_KEY = "travel-app-user";
 
 const normalizeImageUrl = (value: string) => {
-  if (!value) return value
-  if (value.startsWith('http')) return value
-  return `http://localhost:5000${value}`
-}
+  if (!value) return value;
+  if (value.startsWith("http")) return value;
+  return `http://localhost:5000${value}`;
+};
 
-const formatDuration = (minutes: number | string) => `${Number(minutes)} мин`
-const formatDistance = (distance: number | string) => `${Number(distance)} км`
-const handleImageFallback = (event: SyntheticEvent<HTMLImageElement, Event>) => {
-  event.currentTarget.src = DEFAULT_ROUTE_COVER
-}
+const formatDuration = (minutes: number | string) => `${Number(minutes)} мин`;
+const formatDistance = (distance: number | string) => `${Number(distance)} км`;
+const handleImageFallback = (
+  event: SyntheticEvent<HTMLImageElement, Event>,
+) => {
+  event.currentTarget.src = DEFAULT_ROUTE_COVER;
+};
 
 function App() {
-  const [activeTab, setActiveTab] = useState<'places' | 'routes' | 'map' | 'planner'>('places')
-  const [viewerState, setViewerState] = useState<ViewerState | null>(null)
-  const [showFavoritePlacesOnly, setShowFavoritePlacesOnly] = useState(false)
-  const [showFavoriteRoutesOnly, setShowFavoriteRoutesOnly] = useState(false)
-  const [isAccountOpen, setIsAccountOpen] = useState(false)
-  const [currentUser, setCurrentUser] = useState<{ name: string; email: string } | null>(() => {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return null
+  const [activeTab, setActiveTab] = useState<
+    "places" | "routes" | "map" | "planner"
+  >("places");
+  const [viewerState, setViewerState] = useState<ViewerState | null>(null);
+  const [showFavoritePlacesOnly, setShowFavoritePlacesOnly] = useState(false);
+  const [showFavoriteRoutesOnly, setShowFavoriteRoutesOnly] = useState(false);
+  const [isAccountOpen, setIsAccountOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{
+    name: string;
+    email: string;
+  } | null>(() => {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
     try {
-      const parsed = JSON.parse(raw) as { name?: string; email?: string }
+      const parsed = JSON.parse(raw) as { name?: string; email?: string };
       if (parsed?.name && parsed?.email) {
-        return { name: parsed.name, email: parsed.email }
+        return { name: parsed.name, email: parsed.email };
       }
     } catch {
       // ignore broken local profile
     }
-    return null
-  })
+    return null;
+  });
   const {
     places,
     routes,
@@ -62,45 +70,68 @@ function App() {
     togglePlaceFavorite,
     toggleRouteFavorite,
     closeDetails,
-    searchPlaces,
+    categories,
+    tags,
+    fetchPlaces,
     searchRoutes,
   } = useTravelData()
 
-  const openViewer = (images: { src: string; alt: string }[], startIndex: number, title: string) => {
-    if (!images.length) return
-    setViewerState({ images, index: startIndex, title })
-  }
+  const placeFiltersRef = useRef<{ search?: string; category?: number; tag?: number }>({})
+
+  const applyPlaceFilters = useCallback((patch: Partial<typeof placeFiltersRef.current>) => {
+    const prev = placeFiltersRef.current
+    placeFiltersRef.current = { ...prev, ...patch }
+    fetchPlaces(placeFiltersRef.current)
+  }, [fetchPlaces]);
+
+  const openViewer = (
+    images: { src: string; alt: string }[],
+    startIndex: number,
+    title: string,
+  ) => {
+    if (!images.length) return;
+    setViewerState({ images, index: startIndex, title });
+  };
 
   const routePhotos = useMemo(() => {
-    if (!routeDetails) return []
+    if (!routeDetails) return [];
     return routeDetails.points
       .filter((point) => point.place?.main_photo)
       .map((point) => ({
         src: normalizeImageUrl(point.place!.main_photo),
         alt: point.place!.name,
-      }))
-  }, [routeDetails])
+      }));
+  }, [routeDetails]);
 
   const placePhotos = useMemo(() => {
-    if (!placeDetails) return []
+    if (!placeDetails) return [];
     return [
-      { src: normalizeImageUrl(placeDetails.main_photo), alt: placeDetails.name },
+      {
+        src: normalizeImageUrl(placeDetails.main_photo),
+        alt: placeDetails.name,
+      },
       ...placeDetails.photos.map((photo) => ({
         src: normalizeImageUrl(photo.photo),
         alt: placeDetails.name,
       })),
-    ]
-  }, [placeDetails])
+    ];
+  }, [placeDetails]);
 
   const visiblePlaces = useMemo(
-    () => (showFavoritePlacesOnly ? places.filter((place) => favoritePlaceIds.has(place.id)) : places),
-    [showFavoritePlacesOnly, places, favoritePlaceIds]
-  )
+    () =>
+      showFavoritePlacesOnly
+        ? places.filter((place) => favoritePlaceIds.has(place.id))
+        : places,
+    [showFavoritePlacesOnly, places, favoritePlaceIds],
+  );
 
   const visibleRoutes = useMemo(
-    () => (showFavoriteRoutesOnly ? routes.filter((route) => favoriteRouteIds.has(route.id)) : routes),
-    [showFavoriteRoutesOnly, routes, favoriteRouteIds]
-  )
+    () =>
+      showFavoriteRoutesOnly
+        ? routes.filter((route) => favoriteRouteIds.has(route.id))
+        : routes,
+    [showFavoriteRoutesOnly, routes, favoriteRouteIds],
+  );
 
   return (
     <div className="app">
@@ -127,23 +158,26 @@ function App() {
 
       <section className="tabs">
         <button
-          className={`tab ${activeTab === 'places' ? 'tab--active' : ''}`}
-          onClick={() => setActiveTab('places')}
+          className={`tab ${activeTab === "places" ? "tab--active" : ""}`}
+          onClick={() => setActiveTab("places")}
         >
           Достопримечательности
         </button>
         <button
-          className={`tab ${activeTab === 'routes' ? 'tab--active' : ''}`}
-          onClick={() => setActiveTab('routes')}
+          className={`tab ${activeTab === "routes" ? "tab--active" : ""}`}
+          onClick={() => setActiveTab("routes")}
         >
           Маршруты
         </button>
-        <button className={`tab ${activeTab === 'map' ? 'tab--active' : ''}`} onClick={() => setActiveTab('map')}>
+        <button
+          className={`tab ${activeTab === "map" ? "tab--active" : ""}`}
+          onClick={() => setActiveTab("map")}
+        >
           Карта
         </button>
         <button
-          className={`tab ${activeTab === 'planner' ? 'tab--active' : ''}`}
-          onClick={() => setActiveTab('planner')}
+          className={`tab ${activeTab === "planner" ? "tab--active" : ""}`}
+          onClick={() => setActiveTab("planner")}
         >
           Планировщик маршрутов
         </button>
@@ -165,30 +199,41 @@ function App() {
       )}
       {error && <div className="state state--error">{error}</div>}
 
-      {!loading && !error && activeTab === 'places' && (
+      {!loading && !error && activeTab === "places" && (
         <>
           <FiltersBar
             searchPlaceholder="Поиск достопримечательностей"
             searchLabel="Поиск достопримечательностей"
             categoryLabel="Фильтр по категории достопримечательностей"
             tagsLabel="Фильтр по тегам достопримечательностей"
-            onSearchChange={searchPlaces}
+            categories={categories}
+            tags={tags}
+            onSearchChange={(q) => applyPlaceFilters({ search: q || undefined })}
+            onCategoryChange={(id) => applyPlaceFilters({ category: id ?? undefined })}
+            onTagChange={(id) => applyPlaceFilters({ tag: id ?? undefined })}
             extraControl={
-              <label className="favorite-switch" htmlFor="favorites-only-places">
+              <label
+                className="favorite-switch"
+                htmlFor="favorites-only-places"
+              >
                 <span className="favorite-switch__label">Избранное</span>
                 <input
                   id="favorites-only-places"
                   className="favorite-switch__input"
                   type="checkbox"
                   checked={showFavoritePlacesOnly}
-                  onChange={(event) => setShowFavoritePlacesOnly(event.target.checked)}
+                  onChange={(event) =>
+                    setShowFavoritePlacesOnly(event.target.checked)
+                  }
                 />
                 <span className="favorite-switch__slider" aria-hidden />
               </label>
             }
           />
           {showFavoritePlacesOnly && visiblePlaces.length === 0 && (
-            <div className="state">Пока нет избранных достопримечательностей.</div>
+            <div className="state">
+              Пока нет избранных достопримечательностей.
+            </div>
           )}
           <section className="grid">
             {visiblePlaces.map((place) => (
@@ -206,7 +251,7 @@ function App() {
         </>
       )}
 
-      {!loading && !error && activeTab === 'routes' && (
+      {!loading && !error && activeTab === "routes" && (
         <>
           <FiltersBar
             searchPlaceholder="Поиск маршрутов"
@@ -215,14 +260,19 @@ function App() {
             tagsLabel="Фильтр по тегам маршрутов"
             onSearchChange={searchRoutes}
             extraControl={
-              <label className="favorite-switch" htmlFor="favorites-only-routes">
+              <label
+                className="favorite-switch"
+                htmlFor="favorites-only-routes"
+              >
                 <span className="favorite-switch__label">Избранное</span>
                 <input
                   id="favorites-only-routes"
                   className="favorite-switch__input"
                   type="checkbox"
                   checked={showFavoriteRoutesOnly}
-                  onChange={(event) => setShowFavoriteRoutesOnly(event.target.checked)}
+                  onChange={(event) =>
+                    setShowFavoriteRoutesOnly(event.target.checked)
+                  }
                 />
                 <span className="favorite-switch__slider" aria-hidden />
               </label>
@@ -250,11 +300,14 @@ function App() {
         </>
       )}
 
-      {!loading && !error && activeTab === 'map' && (
+      {!loading && !error && activeTab === "map" && (
         <section className="map-page">
           <div className="map-page__header">
             <h2>Карта всех достопримечательностей</h2>
-            <p>На карте отображены все точки из базы данных. Нажми на маркер, чтобы увидеть название и адрес.</p>
+            <p>
+              На карте отображены все точки из базы данных. Нажми на маркер,
+              чтобы увидеть название и адрес.
+            </p>
           </div>
           {yandexApiKey ? (
             <PlacesOverviewMap
@@ -264,14 +317,17 @@ function App() {
               onOpenDetails={openPlaceDetails}
             />
           ) : (
-            <div className="map map--big map--fallback">Не настроен ключ Яндекс.Карт</div>
+            <div className="map map--big map--fallback">
+              Не настроен ключ Яндекс.Карт
+            </div>
           )}
         </section>
       )}
 
-      {!loading && !error && activeTab === 'planner' && (
+      {!loading && !error && activeTab === "planner" && (
         <section className="state">
-          Планировщик маршрутов скоро появится. Сейчас раздел в разработке и ожидает бэкенд.
+          Планировщик маршрутов скоро появится. Сейчас раздел в разработке и
+          ожидает бэкенд.
         </section>
       )}
 
@@ -300,15 +356,27 @@ function App() {
           onPrev={() =>
             setViewerState((prev) =>
               prev
-                ? { ...prev, index: prev.index === 0 ? prev.images.length - 1 : prev.index - 1 }
-                : prev
+                ? {
+                    ...prev,
+                    index:
+                      prev.index === 0
+                        ? prev.images.length - 1
+                        : prev.index - 1,
+                  }
+                : prev,
             )
           }
           onNext={() =>
             setViewerState((prev) =>
               prev
-                ? { ...prev, index: prev.index === prev.images.length - 1 ? 0 : prev.index + 1 }
-                : prev
+                ? {
+                    ...prev,
+                    index:
+                      prev.index === prev.images.length - 1
+                        ? 0
+                        : prev.index + 1,
+                  }
+                : prev,
             )
           }
         />
@@ -324,7 +392,7 @@ function App() {
         />
       )}
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
-import type { PlaceDetails, PlaceListItem, RouteDetails, RouteListItem } from '../types'
+import type { Category, PlaceDetails, PlaceListItem, RouteDetails, RouteListItem, Tag } from '../types'
 
 const API_URL = 'http://localhost:5000/api'
 
@@ -17,6 +17,8 @@ export const useTravelData = () => {
   const [yandexApiKey, setYandexApiKey] = useState<string | null>(null)
   const [favoritePlaceIds, setFavoritePlaceIds] = useState<Set<number>>(new Set())
   const [favoriteRouteIds, setFavoriteRouteIds] = useState<Set<number>>(new Set())
+  const [categories, setCategories] = useState<Category[]>([])
+  const [tags, setTags] = useState<Tag[]>([])
 
   useEffect(() => {
     let mounted = true
@@ -26,16 +28,20 @@ export const useTravelData = () => {
         setLoading(true)
         setError(null)
 
-        const [placesRes, routesRes] = await Promise.all([
+        const [placesRes, routesRes, categoriesRes, tagsRes, configRes] = await Promise.all([
           axios.get<PlaceListItem[]>(`${API_URL}/places`),
           axios.get<RouteListItem[]>(`${API_URL}/routes`),
+          axios.get<Category[]>(`${API_URL}/category`),
+          axios.get<Tag[]>(`${API_URL}/tag`),
+          axios.get<{ yandexMapsApiKey: string | null }>(`${API_URL}/config/public`),
         ])
-        const configRes = await axios.get<{ yandexMapsApiKey: string | null }>(`${API_URL}/config/public`)
 
         if (!mounted) return
 
         setPlaces(placesRes.data)
         setRoutes(routesRes.data)
+        setCategories(categoriesRes.data)
+        setTags(tagsRes.data)
         setYandexApiKey(configRes.data.yandexMapsApiKey)
       } catch {
         if (!mounted) return
@@ -119,9 +125,12 @@ export const useTravelData = () => {
     setRouteDetails(null)
   }
 
-  const searchPlaces = async (query: string) => {
+  const fetchPlaces = async (filters: { search?: string; category?: number; tag?: number } = {}) => {
     try {
-      const params = query.trim() ? { search: query.trim() } : undefined
+      const params: Record<string, string | number> = {}
+      if (filters.search?.trim()) params.search = filters.search.trim()
+      if (filters.category) params.category = filters.category
+      if (filters.tag) params.tag = filters.tag
       const { data } = await axios.get<PlaceListItem[]>(`${API_URL}/places`, { params })
       setPlaces(data)
     } catch {
@@ -157,7 +166,9 @@ export const useTravelData = () => {
     togglePlaceFavorite,
     toggleRouteFavorite,
     closeDetails,
-    searchPlaces,
+    categories,
+    tags,
+    fetchPlaces,
     searchRoutes,
   }
 }

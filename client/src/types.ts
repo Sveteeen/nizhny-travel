@@ -3,6 +3,11 @@ export type Category = {
   name: string
 }
 
+export type Tag = {
+  id: number
+  name: string
+}
+
 export type PlaceListItem = {
   id: number
   name: string
