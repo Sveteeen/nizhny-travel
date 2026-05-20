@@ -22,7 +22,30 @@ const swaggerDocument = {
     '/api/places': {
       get: {
         tags: ['Places'],
-        summary: 'Get places list',
+        summary: 'Получить список достопримечательностей',
+        parameters: [
+          {
+            name: 'search',
+            in: 'query',
+            required: false,
+            schema: { type: 'string' },
+            description: 'Поиск по имени или описанию',
+          },
+          {
+            name: 'category',
+            in: 'query',
+            required: false,
+            schema: { type: 'integer' },
+            description: 'Фильтр по id категории',
+          },
+          {
+            name: 'tag',
+            in: 'query',
+            required: false,
+            schema: { type: 'integer' },
+            description: 'Фильтр по id тега',
+          },
+        ],
         responses: {
           200: {
             description: 'Places list',
@@ -41,7 +64,7 @@ const swaggerDocument = {
     '/api/places/{id}': {
       get: {
         tags: ['Places'],
-        summary: 'Get place details',
+        summary: 'Получить одну достопримечательность',
         parameters: [
           {
             name: 'id',
@@ -68,7 +91,7 @@ const swaggerDocument = {
     '/api/favorite/{id}': {
       post: {
         tags: ['Favorites'],
-        summary: 'Add place to favorites',
+        summary: 'Добавить место в избранное',
         parameters: [
           {
             name: 'id',
@@ -93,7 +116,16 @@ const swaggerDocument = {
     '/api/routes': {
       get: {
         tags: ['Routes'],
-        summary: 'Get predefined routes list',
+        summary: 'Получит все маршруты',
+        parameters: [
+          {
+            name: 'search',
+            in: 'query',
+            required: false,
+            schema: { type: 'string' },
+            description: 'Поиск по имени или описанию',
+          },
+        ],
         responses: {
           200: {
             description: 'Routes list',
@@ -112,7 +144,7 @@ const swaggerDocument = {
     '/api/routes/{id}': {
       get: {
         tags: ['Routes'],
-        summary: 'Get route with ordered points',
+        summary: 'Получить один маршрут',
         parameters: [
           {
             name: 'id',
@@ -139,7 +171,7 @@ const swaggerDocument = {
     '/api/favorites/{placeId}': {
       delete: {
         tags: ['Favorites'],
-        summary: 'Remove place from favorites',
+        summary: 'Удалить место из избранного',
         parameters: [
           {
             name: 'placeId',
@@ -163,7 +195,7 @@ const swaggerDocument = {
     '/api/favorite-route/{id}': {
       post: {
         tags: ['Favorites'],
-        summary: 'Add route to favorites',
+        summary: 'Добавить маршрут в избранное',
         parameters: [
           {
             name: 'id',
@@ -188,7 +220,7 @@ const swaggerDocument = {
     '/api/favorite-routes/{routeId}': {
       delete: {
         tags: ['Favorites'],
-        summary: 'Remove route from favorites',
+        summary: 'Удалить маршрут из избранного',
         parameters: [
           {
             name: 'routeId',
@@ -212,7 +244,7 @@ const swaggerDocument = {
     '/api/upload': {
       post: {
         tags: ['Upload'],
-        summary: 'Upload image file',
+        summary: 'Загрузить фото',
         description: `Max file size: ${uploadMaxFileSizeMb} MB.`,
         requestBody: {
           required: true,
@@ -276,6 +308,9 @@ const swaggerDocument = {
         properties: {
           id: { type: 'integer' },
           name: { type: 'string' },
+          address: { type: 'string' },
+          latitude: { type: 'number' },
+          longitude: { type: 'number' },
           main_photo: { type: 'string' },
           category: { $ref: '#/components/schemas/CategoryShort' },
         },
