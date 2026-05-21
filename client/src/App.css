@@ -691,3 +691,32 @@ select.filters__control:focus {
   color: #dbe8ff;
   padding: 8px 12px;
 }
+
+.auth-modal__switch {
+  margin: 14px 0 0;
+  text-align: center;
+  color: #a6bde5;
+  font-size: 14px;
+}
+
+.auth-modal__link {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #8fb8ff;
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+}
+
+.auth-modal__link:hover {
+  color: #c7ddff;
+}
+
+.account-modal__auth-links {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid #2a426d;
+}

@@ -1,6 +1,7 @@
 import "./App.css";
 import { useCallback, useMemo, useRef, useState, type SyntheticEvent } from "react";
-import { AccountModal } from "./components/account/AccountModal";
+import { AccountOverlay } from "./components/account/AccountOverlay";
+import { readPublicUser } from "./components/account/storage";
 import { DetailsModal } from "./components/DetailsModal";
 import { FiltersBar } from "./components/FiltersBar";
 import { Lightbox } from "./components/Lightbox";
@@ -12,8 +13,6 @@ import type { ViewerState } from "./types";
 
 const DEFAULT_ROUTE_COVER =
   "http://localhost:5000/uploads/places/main/kremlin.png";
-const STORAGE_KEY = "travel-app-user";
-
 const normalizeImageUrl = (value: string) => {
   if (!value) return value;
   if (value.startsWith("http")) return value;
@@ -39,19 +38,7 @@ function App() {
   const [currentUser, setCurrentUser] = useState<{
     name: string;
     email: string;
-  } | null>(() => {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    try {
-      const parsed = JSON.parse(raw) as { name?: string; email?: string };
-      if (parsed?.name && parsed?.email) {
-        return { name: parsed.name, email: parsed.email };
-      }
-    } catch {
-      // ignore broken local profile
-    }
-    return null;
-  });
+  } | null>(readPublicUser);
   const {
     places,
     routes,
@@ -383,7 +370,7 @@ function App() {
       )}
 
       {isAccountOpen && (
-        <AccountModal
+        <AccountOverlay
           user={currentUser}
           onClose={() => setIsAccountOpen(false)}
           onAuthSuccess={(user) => setCurrentUser(user)}
