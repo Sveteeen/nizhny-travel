@@ -90,7 +90,8 @@ function App() {
     tags,
     fetchPlaces,
     searchRoutes,
-  } = useTravelData()
+    loadFavorites,
+  } = useTravelData(!!currentUser)
 
   const placeFiltersRef = useRef<{ search?: string; category?: number; tag?: number }>({})
 
@@ -150,29 +151,35 @@ function App() {
   );
 
   const handleAccountClose = useCallback(() => setIsAccountOpen(false), []);
-  const handleAuthSuccess = useCallback((user: { name: string; email: string }) => {
-    setCurrentUser(user);
-  }, []);
+  const handleAuthSuccess = useCallback(
+    (user: { name: string; email: string }) => {
+      setCurrentUser(user);
+      void loadFavorites();
+    },
+    [loadFavorites],
+  );
   const handleLogout = useCallback(() => setCurrentUser(null), []);
   const handleUpdateProfile = useCallback((user: { name: string; email: string }) => {
     setCurrentUser(user);
   }, []);
 
-  const openFavoritePlaces = useCallback(() => {
+  const openFavoritePlaces = useCallback(async () => {
+    await loadFavorites();
     setActiveTab("places");
     setShowFavoritePlacesOnly(true);
     setShowFavoriteRoutesOnly(false);
     setIsAccountOpen(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
+  }, [loadFavorites]);
 
-  const openFavoriteRoutes = useCallback(() => {
+  const openFavoriteRoutes = useCallback(async () => {
+    await loadFavorites();
     setActiveTab("routes");
     setShowFavoriteRoutesOnly(true);
     setShowFavoritePlacesOnly(false);
     setIsAccountOpen(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
+  }, [loadFavorites]);
 
   return (
     <div className="app">
@@ -434,8 +441,6 @@ function App() {
           onUpdateProfile={handleUpdateProfile}
           onOpenFavoritePlaces={openFavoritePlaces}
           onOpenFavoriteRoutes={openFavoriteRoutes}
-          favoritePlacesCount={favoritePlaceIds.size}
-          favoriteRoutesCount={favoriteRouteIds.size}
         />
       )}
     </div>

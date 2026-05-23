@@ -13,8 +13,6 @@ type AccountOverlayProps = {
   onUpdateProfile: (user: PublicUser) => void
   onOpenFavoritePlaces: () => void
   onOpenFavoriteRoutes: () => void
-  favoritePlacesCount: number
-  favoriteRoutesCount: number
 }
 
 export const AccountOverlay = ({
@@ -25,8 +23,6 @@ export const AccountOverlay = ({
   onUpdateProfile,
   onOpenFavoritePlaces,
   onOpenFavoriteRoutes,
-  favoritePlacesCount,
-  favoriteRoutesCount,
 }: AccountOverlayProps) => {
   const [view, setView] = useState<AccountView>(user ? 'cabinet' : 'login')
 
@@ -39,7 +35,7 @@ export const AccountOverlay = ({
     setView('cabinet')
   }
 
-  const switchToLogin = () => {
+  const handleLogout = () => {
     clearStoredUser()
     onLogout()
     setView('login')
@@ -80,7 +76,7 @@ export const AccountOverlay = ({
       user={user}
       onClose={onClose}
       onUpdateProfile={onUpdateProfile}
-      onOpenLogin={switchToLogin}
+      onOpenLogin={handleLogout}
       onOpenRegister={() => {
         clearStoredUser()
         onLogout()
@@ -88,8 +84,7 @@ export const AccountOverlay = ({
       }}
       onOpenFavoritePlaces={onOpenFavoritePlaces}
       onOpenFavoriteRoutes={onOpenFavoriteRoutes}
-      favoritePlacesCount={favoritePlacesCount}
-      favoriteRoutesCount={favoriteRoutesCount}
+      onLogout={handleLogout}
     />
   )
 }

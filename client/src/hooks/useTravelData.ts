@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import axios from 'axios'
+import { fetchFavoritePlaces, fetchFavoriteRoutes } from '../api/favorites'
 import { API_URL } from '../api/config'
 import { readAuthToken } from '../components/account/storage'
 import type { Category, PlaceDetails, PlaceListItem, RouteDetails, RouteListItem, Tag } from '../types'
@@ -9,7 +10,7 @@ const getAuthConfig = () => {
   return token ? { headers: { Authorization: `Bearer ${token}` } } : {}
 }
 
-export const useTravelData = () => {
+export const useTravelData = (isAuthenticated: boolean) => {
   const [places, setPlaces] = useState<PlaceListItem[]>([])
   const [routes, setRoutes] = useState<RouteListItem[]>([])
   const [placeDetails, setPlaceDetails] = useState<PlaceDetails | null>(null)
@@ -25,6 +26,35 @@ export const useTravelData = () => {
   const [favoriteRouteIds, setFavoriteRouteIds] = useState<Set<number>>(new Set())
   const [categories, setCategories] = useState<Category[]>([])
   const [tags, setTags] = useState<Tag[]>([])
+
+  const loadFavorites = useCallback(async () => {
+    const token = readAuthToken()
+    if (!token) {
+      setFavoritePlaceIds(new Set())
+      setFavoriteRouteIds(new Set())
+      return
+    }
+
+    try {
+      const [favoritePlaces, favoriteRoutes] = await Promise.all([
+        fetchFavoritePlaces(token),
+        fetchFavoriteRoutes(token),
+      ])
+      setFavoritePlaceIds(new Set(favoritePlaces.map((item) => item.place_id)))
+      setFavoriteRouteIds(new Set(favoriteRoutes.map((item) => item.route_id)))
+    } catch {
+      setNotice('Не удалось загрузить избранное.')
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setFavoritePlaceIds(new Set())
+      setFavoriteRouteIds(new Set())
+      return
+    }
+    void loadFavorites()
+  }, [isAuthenticated, loadFavorites])
 
   useEffect(() => {
     let mounted = true
@@ -196,5 +226,6 @@ export const useTravelData = () => {
     tags,
     fetchPlaces,
     searchRoutes,
+    loadFavorites,
   }
 }

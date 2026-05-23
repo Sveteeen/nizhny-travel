@@ -26,8 +26,8 @@
   top: 20px;
   right: 20px;
   z-index: 20;
-  width: 50px;
-  height: 50px;
+  width: 64px;
+  height: 64px;
   border-radius: 999px;
   border: 1px solid #2d456f;
   background: #14223b;
@@ -39,7 +39,7 @@
 }
 
 .profile-button__icon {
-  font-size: 24px;
+  font-size: 32px;
   line-height: 1;
 }
 
@@ -763,10 +763,6 @@
 }
 
 .account-modal__favorites-button {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
   border: 1px solid #3f5f94;
   border-radius: 10px;
   background: #1b3156;
@@ -781,20 +777,6 @@
 
 .account-modal__favorites-button:hover {
   background: #22437a;
-}
-
-.account-modal__favorites-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 6px;
-  border-radius: 999px;
-  background: #2d4f8a;
-  color: #e8f1ff;
-  font-size: 0.8rem;
-  font-weight: 600;
 }
 
 .account-modal__logout {
@@ -832,4 +814,5 @@
   margin-top: 8px;
   padding-top: 10px;
   border-top: 1px solid #2a426d;
+  text-align: center;
 }

@@ -58,9 +58,33 @@ const removeRouteFromFavorites = async ({ userId, routeId }) => {
   return deleted > 0;
 };
 
+const getFavouritePlaces = async (userId) => {
+  const places = await FavouritePlace.findAll({
+    where: { user_id: userId },
+    attributes: [ 'place_id' ],
+  });
+
+  if (!places) return [];
+
+  return places;
+};
+
+const getFavouriteRoutes = async (userId) => {
+  const routes = await FavouriteRoute.findAll({
+    where: { user_id: userId },
+    attributes: [ 'route_id' ],
+  });
+
+  if (!routes) return [];
+
+  return routes;
+};
+
 module.exports = {
   addPlaceToFavorites,
   removePlaceFromFavorites,
   addRouteToFavorites,
   removeRouteFromFavorites,
+  getFavouritePlaces,
+  getFavouriteRoutes,
 };

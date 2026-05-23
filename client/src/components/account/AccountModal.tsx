@@ -12,8 +12,7 @@ type AccountModalProps = {
   onOpenRegister: () => void
   onOpenFavoritePlaces: () => void
   onOpenFavoriteRoutes: () => void
-  favoritePlacesCount: number
-  favoriteRoutesCount: number
+  onLogout: () => void
 }
 
 export const AccountModal = ({
@@ -24,8 +23,7 @@ export const AccountModal = ({
   onOpenRegister,
   onOpenFavoritePlaces,
   onOpenFavoriteRoutes,
-  favoritePlacesCount,
-  favoriteRoutesCount,
+  onLogout,
 }: AccountModalProps) => {
   const [profile, setProfile] = useState(user)
   const [error, setError] = useState<string | null>(null)
@@ -88,9 +86,6 @@ export const AccountModal = ({
               onClick={onOpenFavoritePlaces}
             >
               Избранные места
-              {favoritePlacesCount > 0 && (
-                <span className="account-modal__favorites-count">{favoritePlacesCount}</span>
-              )}
             </button>
             <button
               className="account-modal__favorites-button"
@@ -98,9 +93,6 @@ export const AccountModal = ({
               onClick={onOpenFavoriteRoutes}
             >
               Избранные маршруты
-              {favoriteRoutesCount > 0 && (
-                <span className="account-modal__favorites-count">{favoriteRoutesCount}</span>
-              )}
             </button>
           </div>
           <div className="account-modal__auth-links">
@@ -109,6 +101,9 @@ export const AccountModal = ({
             </button>
             <button className="auth-modal__link" type="button" onClick={onOpenRegister}>
               Создать новый аккаунт
+            </button>
+            <button className="auth-modal__link" type="button" onClick={onLogout}>
+              Выйти
             </button>
           </div>
         </div>
