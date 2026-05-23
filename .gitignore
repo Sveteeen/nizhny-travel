@@ -1,9 +1,8 @@
 # dependencies
 node_modules/
 
-# environment variables
+# environment variables (secrets — copy from server/.env.local and fill in)
 .env
-.env.local
 
 # build outputs
 dist/
