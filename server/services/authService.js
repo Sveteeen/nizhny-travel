@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { User } = require('../db/models');
+const { User, Role } = require('../db/models');
 
 const USER_ROLE_ID = 2;
 
@@ -66,5 +66,14 @@ const login = async ({ email, password }) => {
   return { user: plainUser, token };
 }
 
-module.exports = { login, register };
+const getUserById = async (userId) => {
+  const user = await User.findOne({
+    where: { id: userId },
+    attributes: { exclude: ['password' ] },
+    include: [{ model: Role, as: 'role', attributes: ['id', 'name'] }],
+  });
+  return user;
+}
+
+module.exports = { login, register, getUserById };
 

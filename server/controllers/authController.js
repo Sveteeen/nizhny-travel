@@ -36,5 +36,17 @@ const login = async (req, res, next) => {
     }
 };
 
-module.exports = { login, register };
+const me = async (req, res, next) => {
+    try {
+        const user = await authService.getUserById(req.userId);
+        if (!user) {
+            return res.status(404).json({ error: 'Пользователь не найден' });
+        }
+        return res.json(user);
+    } catch (error) {
+        return next(error);
+    } 
+};
+
+module.exports = { login, register, me };
 

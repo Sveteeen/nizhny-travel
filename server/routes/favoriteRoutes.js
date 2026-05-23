@@ -1,11 +1,12 @@
 const { Router } = require('express');
 const favoriteController = require('../controllers/favoriteController');
+const { requireAuth } = require('../middleware/authMiddleware');
 
 const router = Router();
 
-router.post('/favorite/:id', favoriteController.addPlaceToFavorites);
-router.delete('/favorites/:placeId', favoriteController.removePlaceFromFavorites);
-router.post('/favorite-route/:id', favoriteController.addRouteToFavorites);
-router.delete('/favorite-routes/:routeId', favoriteController.removeRouteFromFavorites);
+router.post('/favorite/:id', requireAuth, favoriteController.addPlaceToFavorites);
+router.delete('/favorites/:placeId', requireAuth, favoriteController.removePlaceFromFavorites);
+router.post('/favorite-route/:id', requireAuth, favoriteController.addRouteToFavorites);
+router.delete('/favorite-routes/:routeId', requireAuth, favoriteController.removeRouteFromFavorites);
 
 module.exports = router;
