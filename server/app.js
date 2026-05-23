@@ -8,6 +8,7 @@ const favoriteRoutes = require('./routes/favoriteRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const tagRoutes = require('./routes/tagRoutes');
+const authRoutes = require('./routes/authRoutes');
 const { uploadsRoot } = require('./services/uploadService');
 
 const app = express();
@@ -32,6 +33,7 @@ app.use('/api', favoriteRoutes);
 app.use('/api', uploadRoutes);
 app.use('/api', categoryRoutes);
 app.use('/api', tagRoutes);
+app.use('/api', authRoutes);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use((err, req, res, next) => {
