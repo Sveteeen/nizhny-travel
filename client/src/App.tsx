@@ -1,7 +1,9 @@
 import "./App.css";
-import { useCallback, useMemo, useRef, useState, type SyntheticEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type SyntheticEvent } from "react";
+import { fetchMe, toPublicUser } from "./api/auth";
 import { AccountOverlay } from "./components/account/AccountOverlay";
-import { readPublicUser } from "./components/account/storage";
+import { clearStoredUser, readAuthToken, readPublicUser, saveSession } from "./components/account/storage";
+import { AlertModal } from "./components/AlertModal";
 import { DetailsModal } from "./components/DetailsModal";
 import { FiltersBar } from "./components/FiltersBar";
 import { Lightbox } from "./components/Lightbox";
@@ -39,6 +41,31 @@ function App() {
     name: string;
     email: string;
   } | null>(readPublicUser);
+
+  useEffect(() => {
+    const token = readAuthToken();
+    if (!token) return;
+
+    let mounted = true;
+
+    fetchMe(token)
+      .then((user) => {
+        if (!mounted) return;
+        const publicUser = toPublicUser(user);
+        saveSession({ token, user: publicUser });
+        setCurrentUser(publicUser);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        clearStoredUser();
+        setCurrentUser(null);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   const {
     places,
     routes,
@@ -49,6 +76,8 @@ function App() {
     favoritesLoading,
     favoriteRoutesLoading,
     error,
+    notice,
+    clearNotice,
     yandexApiKey,
     favoritePlaceIds,
     favoriteRouteIds,
@@ -119,6 +148,15 @@ function App() {
         : routes,
     [showFavoriteRoutesOnly, routes, favoriteRouteIds],
   );
+
+  const handleAccountClose = useCallback(() => setIsAccountOpen(false), []);
+  const handleAuthSuccess = useCallback((user: { name: string; email: string }) => {
+    setCurrentUser(user);
+  }, []);
+  const handleLogout = useCallback(() => setCurrentUser(null), []);
+  const handleUpdateProfile = useCallback((user: { name: string; email: string }) => {
+    setCurrentUser(user);
+  }, []);
 
   return (
     <div className="app">
@@ -369,13 +407,15 @@ function App() {
         />
       )}
 
+      {notice && <AlertModal message={notice} onClose={clearNotice} />}
+
       {isAccountOpen && (
         <AccountOverlay
           user={currentUser}
-          onClose={() => setIsAccountOpen(false)}
-          onAuthSuccess={(user) => setCurrentUser(user)}
-          onLogout={() => setCurrentUser(null)}
-          onUpdateProfile={(user) => setCurrentUser(user)}
+          onClose={handleAccountClose}
+          onAuthSuccess={handleAuthSuccess}
+          onLogout={handleLogout}
+          onUpdateProfile={handleUpdateProfile}
         />
       )}
     </div>

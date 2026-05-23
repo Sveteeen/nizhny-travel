@@ -379,6 +379,19 @@ select.filters__control:focus {
   background: transparent;
 }
 
+.alert-modal {
+  width: min(420px, 92vw);
+  padding: 28px 24px 22px;
+}
+
+.alert-modal__message {
+  margin: 0;
+  padding-right: 28px;
+  color: #dce7ff;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
 .modal__close {
   position: absolute;
   right: 12px;
@@ -666,6 +679,14 @@ select.filters__control:focus {
 .account-modal__state--error {
   border-color: #8e4a63;
   background: #311926;
+}
+
+.account-modal__state--muted {
+  border-color: transparent;
+  background: transparent;
+  color: #8fb2ff;
+  font-size: 0.9rem;
+  padding: 0 0 8px;
 }
 
 .account-modal__profile {

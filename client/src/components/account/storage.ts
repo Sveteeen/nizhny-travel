@@ -1,28 +1,33 @@
-import type { PublicUser, StoredUser } from './types'
+import type { PublicUser } from './types'
 
-export const STORAGE_KEY = 'travel-app-user'
+export const STORAGE_KEY = 'travel-app-session'
+
+export type StoredSession = {
+  token: string
+  user: PublicUser
+}
 
 export const normalizeEmail = (value: string) => value.trim().toLowerCase()
 
-export const readStoredUser = (): StoredUser | null => {
+export const readSession = (): StoredSession | null => {
   const raw = localStorage.getItem(STORAGE_KEY)
   if (!raw) return null
   try {
-    return JSON.parse(raw) as StoredUser
+    const parsed = JSON.parse(raw) as StoredSession
+    if (!parsed?.token || !parsed?.user?.email) return null
+    return parsed
   } catch {
     return null
   }
 }
 
-export const saveStoredUser = (user: StoredUser) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(user))
+export const saveSession = (session: StoredSession) => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(session))
 }
 
-export const readPublicUser = (): PublicUser | null => {
-  const stored = readStoredUser()
-  if (!stored?.name || !stored?.email) return null
-  return { name: stored.name, email: stored.email }
-}
+export const readAuthToken = () => readSession()?.token ?? null
+
+export const readPublicUser = (): PublicUser | null => readSession()?.user ?? null
 
 export const clearStoredUser = () => {
   localStorage.removeItem(STORAGE_KEY)

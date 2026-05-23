@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
+import { getApiErrorMessage, login, toPublicUser } from '../../api/auth'
 import { ModalShell } from './ModalShell'
-import { normalizeEmail, readStoredUser } from './storage'
+import { saveSession } from './storage'
 import type { PublicUser } from './types'
 
 type LoginModalProps = {
@@ -14,22 +15,30 @@ export const LoginModal = ({ onClose, onSuccess, onOpenRegister }: LoginModalPro
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleLogin = (event: FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setError(null)
     setMessage(null)
-    const stored = readStoredUser()
-    if (!stored) {
-      setError('Пользователь не найден. Зарегистрируйтесь.')
+
+    if (!email.trim() || !password) {
+      setError('Введите почту и пароль.')
       return
     }
-    if (normalizeEmail(email) !== normalizeEmail(stored.email) || password !== stored.password) {
-      setError('Неверный email или пароль')
-      return
+
+    try {
+      setIsSubmitting(true)
+      const { user, token } = await login(email, password)
+      const publicUser = toPublicUser(user)
+      saveSession({ token, user: publicUser })
+      onSuccess(publicUser)
+      setMessage('Успешный вход')
+    } catch (requestError) {
+      setError(getApiErrorMessage(requestError, 'Не удалось войти. Проверьте данные и сервер.'))
+    } finally {
+      setIsSubmitting(false)
     }
-    onSuccess({ name: stored.name, email: stored.email })
-    setMessage('Успешный вход')
   }
 
   return (
@@ -44,6 +53,7 @@ export const LoginModal = ({ onClose, onSuccess, onOpenRegister }: LoginModalPro
           value={email}
           placeholder="Email"
           autoComplete="email"
+          disabled={isSubmitting}
           onChange={(event) => setEmail(event.target.value)}
         />
         <input
@@ -52,16 +62,17 @@ export const LoginModal = ({ onClose, onSuccess, onOpenRegister }: LoginModalPro
           value={password}
           placeholder="Пароль"
           autoComplete="current-password"
+          disabled={isSubmitting}
           onChange={(event) => setPassword(event.target.value)}
         />
-        <button className="card__button account-form__submit" type="submit">
-          Войти
+        <button className="card__button account-form__submit" type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Вход…' : 'Войти'}
         </button>
       </form>
 
       <p className="auth-modal__switch">
         Нет аккаунта?{' '}
-        <button className="auth-modal__link" type="button" onClick={onOpenRegister}>
+        <button className="auth-modal__link" type="button" onClick={onOpenRegister} disabled={isSubmitting}>
           Зарегистрироваться
         </button>
       </p>

@@ -1,8 +1,13 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
+import { API_URL } from '../api/config'
+import { readAuthToken } from '../components/account/storage'
 import type { Category, PlaceDetails, PlaceListItem, RouteDetails, RouteListItem, Tag } from '../types'
 
-const API_URL = 'http://localhost:5000/api'
+const getAuthConfig = () => {
+  const token = readAuthToken()
+  return token ? { headers: { Authorization: `Bearer ${token}` } } : {}
+}
 
 export const useTravelData = () => {
   const [places, setPlaces] = useState<PlaceListItem[]>([])
@@ -14,6 +19,7 @@ export const useTravelData = () => {
   const [favoritesLoading, setFavoritesLoading] = useState<number | null>(null)
   const [favoriteRoutesLoading, setFavoriteRoutesLoading] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
   const [yandexApiKey, setYandexApiKey] = useState<string | null>(null)
   const [favoritePlaceIds, setFavoritePlaceIds] = useState<Set<number>>(new Set())
   const [favoriteRouteIds, setFavoriteRouteIds] = useState<Set<number>>(new Set())
@@ -78,44 +84,62 @@ export const useTravelData = () => {
   }
 
   const togglePlaceFavorite = async (placeId: number) => {
+    if (!readAuthToken()) {
+      setNotice('Войдите в аккаунт, чтобы добавить место в избранное.')
+      return
+    }
+
     try {
       setFavoritesLoading(placeId)
+      setError(null)
       const isFavorite = favoritePlaceIds.has(placeId)
       if (isFavorite) {
-        await axios.delete(`${API_URL}/favorites/${placeId}`)
+        await axios.delete(`${API_URL}/favorites/${placeId}`, getAuthConfig())
         setFavoritePlaceIds((prev) => {
           const next = new Set(prev)
           next.delete(placeId)
           return next
         })
       } else {
-        await axios.post(`${API_URL}/favorite/${placeId}`)
+        await axios.post(`${API_URL}/favorite/${placeId}`, null, getAuthConfig())
         setFavoritePlaceIds((prev) => new Set(prev).add(placeId))
       }
+    } catch {
+      setNotice('Не удалось обновить избранное. Проверьте вход в аккаунт.')
     } finally {
       setFavoritesLoading(null)
     }
   }
 
   const toggleRouteFavorite = async (routeId: number) => {
+    if (!readAuthToken()) {
+      setNotice('Войдите в аккаунт, чтобы добавить маршрут в избранное.')
+      return
+    }
+
     try {
       setFavoriteRoutesLoading(routeId)
+      setError(null)
       const isFavorite = favoriteRouteIds.has(routeId)
       if (isFavorite) {
-        await axios.delete(`${API_URL}/favorite-routes/${routeId}`)
+        await axios.delete(`${API_URL}/favorite-routes/${routeId}`, getAuthConfig())
         setFavoriteRouteIds((prev) => {
           const next = new Set(prev)
           next.delete(routeId)
           return next
         })
       } else {
-        await axios.post(`${API_URL}/favorite-route/${routeId}`)
+        await axios.post(`${API_URL}/favorite-route/${routeId}`, null, getAuthConfig())
         setFavoriteRouteIds((prev) => new Set(prev).add(routeId))
       }
+    } catch {
+      setNotice('Не удалось обновить избранное. Проверьте вход в аккаунт.')
     } finally {
       setFavoriteRoutesLoading(null)
     }
   }
+
+  const clearNotice = () => setNotice(null)
 
   const closeDetails = () => {
     if (placeDetails) {
@@ -158,6 +182,8 @@ export const useTravelData = () => {
     favoritesLoading,
     favoriteRoutesLoading,
     error,
+    notice,
+    clearNotice,
     yandexApiKey,
     favoritePlaceIds,
     favoriteRouteIds,
