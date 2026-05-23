@@ -1,16 +1,5 @@
 const favoriteService = require('../services/favoriteService');
 
-const getCurrentUserId = (req) => {
-  const rawUserId = req.body?.userId || req.query?.userId || req.headers['x-user-id'] || 2;
-  const parsed = Number(rawUserId);
-
-  if (!Number.isInteger(parsed) || parsed <= 0) {
-    return null;
-  }
-
-  return parsed;
-};
-
 const addPlaceToFavorites = async (req, res, next) => {
   try {
     const placeId = Number(req.params.id);
@@ -18,12 +7,10 @@ const addPlaceToFavorites = async (req, res, next) => {
       return res.status(400).json({ error: 'Invalid place id' });
     }
 
-    const userId = getCurrentUserId(req);
-    if (!userId) {
-      return res.status(400).json({ error: 'Invalid user id' });
-    }
-
-    const result = await favoriteService.addPlaceToFavorites({ userId, placeId });
+    const result = await favoriteService.addPlaceToFavorites({
+      userId: req.userId,
+      placeId,
+    });
     if (result.status === 'place_not_found') {
       return res.status(404).json({ error: 'Place not found' });
     }
@@ -44,12 +31,10 @@ const removePlaceFromFavorites = async (req, res, next) => {
       return res.status(400).json({ error: 'Invalid place id' });
     }
 
-    const userId = getCurrentUserId(req);
-    if (!userId) {
-      return res.status(400).json({ error: 'Invalid user id' });
-    }
-
-    const deleted = await favoriteService.removePlaceFromFavorites({ userId, placeId });
+    const deleted = await favoriteService.removePlaceFromFavorites({
+      userId: req.userId,
+      placeId,
+    });
     if (!deleted) {
       return res.status(404).json({ error: 'Favorite not found' });
     }
@@ -67,12 +52,10 @@ const addRouteToFavorites = async (req, res, next) => {
       return res.status(400).json({ error: 'Invalid route id' });
     }
 
-    const userId = getCurrentUserId(req);
-    if (!userId) {
-      return res.status(400).json({ error: 'Invalid user id' });
-    }
-
-    const result = await favoriteService.addRouteToFavorites({ userId, routeId });
+    const result = await favoriteService.addRouteToFavorites({
+      userId: req.userId,
+      routeId,
+    });
     if (result.status === 'route_not_found') {
       return res.status(404).json({ error: 'Route not found' });
     }
@@ -93,12 +76,10 @@ const removeRouteFromFavorites = async (req, res, next) => {
       return res.status(400).json({ error: 'Invalid route id' });
     }
 
-    const userId = getCurrentUserId(req);
-    if (!userId) {
-      return res.status(400).json({ error: 'Invalid user id' });
-    }
-
-    const deleted = await favoriteService.removeRouteFromFavorites({ userId, routeId });
+    const deleted = await favoriteService.removeRouteFromFavorites({
+      userId: req.userId,
+      routeId,
+    });
     if (!deleted) {
       return res.status(404).json({ error: 'Favorite route not found' });
     }

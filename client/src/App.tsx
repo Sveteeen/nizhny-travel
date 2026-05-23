@@ -158,6 +158,22 @@ function App() {
     setCurrentUser(user);
   }, []);
 
+  const openFavoritePlaces = useCallback(() => {
+    setActiveTab("places");
+    setShowFavoritePlacesOnly(true);
+    setShowFavoriteRoutesOnly(false);
+    setIsAccountOpen(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  const openFavoriteRoutes = useCallback(() => {
+    setActiveTab("routes");
+    setShowFavoriteRoutesOnly(true);
+    setShowFavoritePlacesOnly(false);
+    setIsAccountOpen(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
   return (
     <div className="app">
       <header className="hero">
@@ -416,6 +432,10 @@ function App() {
           onAuthSuccess={handleAuthSuccess}
           onLogout={handleLogout}
           onUpdateProfile={handleUpdateProfile}
+          onOpenFavoritePlaces={openFavoritePlaces}
+          onOpenFavoriteRoutes={openFavoriteRoutes}
+          favoritePlacesCount={favoritePlaceIds.size}
+          favoriteRoutesCount={favoriteRouteIds.size}
         />
       )}
     </div>

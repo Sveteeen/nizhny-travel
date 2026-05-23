@@ -7,19 +7,25 @@ import type { PublicUser } from './types'
 type AccountModalProps = {
   user: PublicUser
   onClose: () => void
-  onLogout: () => void
   onUpdateProfile: (user: PublicUser) => void
   onOpenLogin: () => void
   onOpenRegister: () => void
+  onOpenFavoritePlaces: () => void
+  onOpenFavoriteRoutes: () => void
+  favoritePlacesCount: number
+  favoriteRoutesCount: number
 }
 
 export const AccountModal = ({
   user,
   onClose,
-  onLogout,
   onUpdateProfile,
   onOpenLogin,
   onOpenRegister,
+  onOpenFavoritePlaces,
+  onOpenFavoriteRoutes,
+  favoritePlacesCount,
+  favoriteRoutesCount,
 }: AccountModalProps) => {
   const [profile, setProfile] = useState(user)
   const [error, setError] = useState<string | null>(null)
@@ -64,10 +70,6 @@ export const AccountModal = ({
     }
   }, [])
 
-  const handleLogout = () => {
-    onLogout()
-  }
-
   return (
     <ModalShell title="Личный кабинет" onClose={onClose}>
       {error && <p className="account-modal__state account-modal__state--error">{error}</p>}
@@ -79,9 +81,28 @@ export const AccountModal = ({
         <div className="account-modal__profile">
           <p className="account-modal__name">{profile.name}</p>
           <p className="account-modal__email">{profile.email}</p>
-          <button className="account-modal__logout" type="button" onClick={handleLogout}>
-            Выйти
-          </button>
+          <div className="account-modal__favorites">
+            <button
+              className="account-modal__favorites-button"
+              type="button"
+              onClick={onOpenFavoritePlaces}
+            >
+              Избранные места
+              {favoritePlacesCount > 0 && (
+                <span className="account-modal__favorites-count">{favoritePlacesCount}</span>
+              )}
+            </button>
+            <button
+              className="account-modal__favorites-button"
+              type="button"
+              onClick={onOpenFavoriteRoutes}
+            >
+              Избранные маршруты
+              {favoriteRoutesCount > 0 && (
+                <span className="account-modal__favorites-count">{favoriteRoutesCount}</span>
+              )}
+            </button>
+          </div>
           <div className="account-modal__auth-links">
             <button className="auth-modal__link" type="button" onClick={onOpenLogin}>
               Войти в другой аккаунт
