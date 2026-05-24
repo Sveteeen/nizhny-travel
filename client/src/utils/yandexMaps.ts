@@ -5,9 +5,20 @@ export type YMapsGeoObject = {
   geometry?: { getBounds: () => number[][] }
 }
 
+export type YMapsMultiRoute = YMapsGeoObject & {
+  model: {
+    events: {
+      add: (event: string, handler: () => void) => void
+    }
+  }
+}
+
 export type YMapsMapInstance = {
   destroy: () => void
-  geoObjects: { add: (object: YMapsGeoObject) => void }
+  geoObjects: {
+    add: (object: YMapsGeoObject) => void
+    remove: (object: YMapsGeoObject) => void
+  }
   setBounds: (
     bounds: number[][],
     options?: Record<string, unknown>,
@@ -19,6 +30,13 @@ export type YMapsMapInstance = {
 
 type YMapsApi = {
   ready: (callback: () => void) => void
+  load?: (module: string) => Promise<void>
+  multiRouter?: {
+    MultiRoute: new (
+      referencePoints: Record<string, unknown>,
+      options?: Record<string, unknown>,
+    ) => YMapsMultiRoute
+  }
   Map: new (
     element: HTMLElement,
     state: Record<string, unknown>,
@@ -69,3 +87,28 @@ export const loadYandexMaps = (apiKey: string) =>
     script.onerror = () => reject(new Error('Failed to load Yandex Maps'))
     document.head.appendChild(script)
   })
+
+export const loadYandexRouter = async (apiKey: string) => {
+  await loadYandexMaps(apiKey)
+
+  const ymaps = window.ymaps
+  if (!ymaps) {
+    throw new Error('Yandex Maps not loaded')
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    ymaps.ready(() => {
+      if (ymaps.multiRouter?.MultiRoute) {
+        resolve()
+        return
+      }
+
+      if (!ymaps.load) {
+        reject(new Error('Yandex Maps router package is unavailable'))
+        return
+      }
+
+      ymaps.load('package.full').then(() => resolve()).catch(reject)
+    })
+  })
+}
