@@ -18,6 +18,7 @@ const swaggerDocument = {
     { name: 'Routes' },
     { name: 'Favorites' },
     { name: 'Upload' },
+    { name: 'Planner' },
   ],
   paths: {
     '/api/auth/register': {
@@ -421,6 +422,62 @@ const swaggerDocument = {
         },
       },
     },
+    '/api/planner/build': {
+      post: {
+        tags: ['Planner'],
+        summary: 'Построить пеший маршрут',
+        description:
+          'Публичный эндпоинт. Для source=favorites нужен Bearer JWT.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/PlannerBuildRequest' },
+              example: {
+                placeIds: [1, 2, 3],
+                startPlaceId: 1,
+                optimize: true,
+                source: 'all',
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Маршрут построен',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/PlannerBuildResponse' },
+              },
+            },
+          },
+          400: {
+            description: 'Некорректный запрос',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiError' },
+              },
+            },
+          },
+          401: {
+            description: 'Нужна авторизация для source=favorites',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiError' },
+              },
+            },
+          },
+          502: {
+            description: 'Ошибка Yandex Router API',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ApiError' },
+              },
+            },
+          },
+        },
+      },
+    },
     '/api/upload': {
       post: {
         tags: ['Upload'],
@@ -668,6 +725,61 @@ const swaggerDocument = {
             type: 'array',
             items: { $ref: '#/components/schemas/RoutePoint' },
           },
+        },
+      },
+      PlannerBuildRequest: {
+        type: 'object',
+        required: ['placeIds'],
+        properties: {
+          placeIds: {
+            type: 'array',
+            items: { type: 'integer' },
+            minItems: 2,
+            maxItems: 25,
+          },
+          startPlaceId: { type: 'integer', nullable: true },
+          optimize: { type: 'boolean', default: true },
+          source: {
+            type: 'string',
+            enum: ['all', 'favorites'],
+            default: 'all',
+          },
+        },
+      },
+      PlannerOrderedPlace: {
+        type: 'object',
+        properties: {
+          place_id: { type: 'integer' },
+          order_index: { type: 'integer' },
+          name: { type: 'string' },
+          address: { type: 'string' },
+          latitude: { type: 'number' },
+          longitude: { type: 'number' },
+          main_photo: { type: 'string' },
+          leg_duration_minutes: { type: 'integer', nullable: true },
+          leg_distance_km: { type: 'number', nullable: true },
+        },
+      },
+      PlannerBuildResponse: {
+        type: 'object',
+        properties: {
+          ordered_places: {
+            type: 'array',
+            items: { $ref: '#/components/schemas/PlannerOrderedPlace' },
+          },
+          distance_km: { type: 'number' },
+          duration_minutes: { type: 'integer' },
+          geometry: {
+            type: 'array',
+            items: {
+              type: 'array',
+              items: { type: 'number' },
+              minItems: 2,
+              maxItems: 2,
+            },
+          },
+          optimized: { type: 'boolean' },
+          start_place_id: { type: 'integer' },
         },
       },
     },
