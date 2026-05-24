@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { PlaceListItem } from '../../types'
-import { loadYandexMaps } from '../../utils/yandexMaps'
+import { loadYandexMaps, type YMapsMapInstance } from '../../utils/yandexMaps'
 
 type PlacesOverviewMapProps = {
   apiKey: string
@@ -11,7 +11,7 @@ type PlacesOverviewMapProps = {
 
 export const PlacesOverviewMap = ({ apiKey, places, normalizeImageUrl, onOpenDetails }: PlacesOverviewMapProps) => {
   const mapRef = useRef<HTMLDivElement | null>(null)
-  const mapInstanceRef = useRef<any>(null)
+  const mapInstanceRef = useRef<YMapsMapInstance | null>(null)
 
   useEffect(() => {
     let active = true
@@ -20,12 +20,15 @@ export const PlacesOverviewMap = ({ apiKey, places, normalizeImageUrl, onOpenDet
         await loadYandexMaps(apiKey)
         if (!active || !mapRef.current || !window.ymaps || places.length === 0) return
 
+        const ymaps = window.ymaps
+
         mapInstanceRef.current?.destroy()
-        mapInstanceRef.current = new window.ymaps.Map(mapRef.current, {
+        const map = new ymaps.Map(mapRef.current, {
           center: [56.3269, 44.0059],
           zoom: 12,
           controls: ['zoomControl'],
         })
+        mapInstanceRef.current = map
 
         const bounds: number[][] = []
         places.forEach((place) => {
@@ -35,7 +38,7 @@ export const PlacesOverviewMap = ({ apiKey, places, normalizeImageUrl, onOpenDet
           bounds.push([latitude, longitude])
 
           const imageUrl = normalizeImageUrl(place.main_photo)
-          const markerLayout = window.ymaps.templateLayoutFactory.createClass(`
+          const markerLayout = ymaps.templateLayoutFactory.createClass(`
             <div style="
               width: 56px;
               height: 56px;
@@ -49,7 +52,7 @@ export const PlacesOverviewMap = ({ apiKey, places, normalizeImageUrl, onOpenDet
             "></div>
           `)
 
-          const marker = new window.ymaps.Placemark(
+          const marker = new ymaps.Placemark(
             [latitude, longitude],
             {
               hintContent: place.name,
@@ -67,19 +70,19 @@ export const PlacesOverviewMap = ({ apiKey, places, normalizeImageUrl, onOpenDet
             }
           )
           marker.events.add('click', () => onOpenDetails(place.id))
-          mapInstanceRef.current.geoObjects.add(marker)
+          map.geoObjects.add(marker)
         })
 
         if (bounds.length > 1) {
-          const fitResult = mapInstanceRef.current.setBounds(bounds, {
+          const fitResult = map.setBounds(bounds, {
             checkZoomRange: true,
             zoomMargin: 45,
           })
 
           const limitOverviewZoom = () => {
-            const currentZoom = mapInstanceRef.current?.getZoom()
+            const currentZoom = map.getZoom()
             if (typeof currentZoom === 'number' && currentZoom > 12) {
-              mapInstanceRef.current?.setZoom(11, { duration: 0 })
+              map.setZoom(11, { duration: 0 })
             }
           }
 
@@ -89,7 +92,7 @@ export const PlacesOverviewMap = ({ apiKey, places, normalizeImageUrl, onOpenDet
             limitOverviewZoom()
           }
         } else if (bounds.length === 1) {
-          mapInstanceRef.current.setCenter(bounds[0], 13)
+          map.setCenter(bounds[0], 13)
         }
       } catch {
         // no-op

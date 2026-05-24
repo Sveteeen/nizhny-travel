@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { loadYandexMaps } from '../../utils/yandexMaps'
+import { loadYandexMaps, type YMapsMapInstance } from '../../utils/yandexMaps'
 
 type PlaceMiniMapProps = {
   apiKey: string
@@ -9,7 +9,7 @@ type PlaceMiniMapProps = {
 
 export const PlaceMiniMap = ({ apiKey, latitude, longitude }: PlaceMiniMapProps) => {
   const mapRef = useRef<HTMLDivElement | null>(null)
-  const mapInstanceRef = useRef<any>(null)
+  const mapInstanceRef = useRef<YMapsMapInstance | null>(null)
 
   useEffect(() => {
     let active = true
@@ -19,13 +19,15 @@ export const PlaceMiniMap = ({ apiKey, latitude, longitude }: PlaceMiniMapProps)
         await loadYandexMaps(apiKey)
         if (!active || !mapRef.current || !window.ymaps) return
 
+        const ymaps = window.ymaps
+
         mapInstanceRef.current?.destroy()
-        mapInstanceRef.current = new window.ymaps.Map(mapRef.current, {
+        mapInstanceRef.current = new ymaps.Map(mapRef.current, {
           center: [latitude, longitude],
           zoom: 15,
           controls: ['zoomControl'],
         })
-        const marker = new window.ymaps.Placemark([latitude, longitude], {}, {
+        const marker = new ymaps.Placemark([latitude, longitude], {}, {
           preset: 'islands#blueCircleDotIcon',
         })
         mapInstanceRef.current.geoObjects.add(marker)

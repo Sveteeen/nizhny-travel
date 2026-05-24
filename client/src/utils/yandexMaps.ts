@@ -1,10 +1,47 @@
 const YMAPS_SCRIPT_ID = 'yandex-maps-script'
 
+export type YMapsGeoObject = {
+  events: { add: (event: string, handler: () => void) => void }
+  geometry?: { getBounds: () => number[][] }
+}
+
+export type YMapsMapInstance = {
+  destroy: () => void
+  geoObjects: { add: (object: YMapsGeoObject) => void }
+  setBounds: (
+    bounds: number[][],
+    options?: Record<string, unknown>,
+  ) => Promise<void> | void
+  setCenter: (center: number[], zoom: number) => void
+  setZoom: (zoom: number, options?: { duration?: number }) => void
+  getZoom: () => number
+}
+
+type YMapsApi = {
+  ready: (callback: () => void) => void
+  Map: new (
+    element: HTMLElement,
+    state: Record<string, unknown>,
+    options?: Record<string, unknown>,
+  ) => YMapsMapInstance
+  Placemark: new (
+    coordinates: number[],
+    properties?: Record<string, unknown>,
+    options?: Record<string, unknown>,
+  ) => YMapsGeoObject
+  Polyline: new (
+    coordinates: number[][],
+    properties?: Record<string, unknown>,
+    options?: Record<string, unknown>,
+  ) => YMapsGeoObject
+  templateLayoutFactory: {
+    createClass: (html: string) => unknown
+  }
+}
+
 declare global {
   interface Window {
-    ymaps?: {
-      ready: (callback: () => void) => void
-    }
+    ymaps?: YMapsApi
   }
 }
 
