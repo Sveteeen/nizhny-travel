@@ -8,6 +8,7 @@ import { DetailsModal } from "./components/DetailsModal";
 import { FiltersBar } from "./components/FiltersBar";
 import { Lightbox } from "./components/Lightbox";
 import { PlacesOverviewMap } from "./components/maps/PlacesOverviewMap";
+import { PlannerPage } from "./components/planner/PlannerPage";
 import { PlaceCard } from "./components/PlaceCard";
 import { RouteCard } from "./components/RouteCard";
 import { useTravelData } from "./hooks/useTravelData";
@@ -389,10 +390,16 @@ function App() {
       )}
 
       {!loading && !error && activeTab === "planner" && (
-        <section className="state">
-          Планировщик маршрутов скоро появится. Сейчас раздел в разработке и
-          ожидает бэкенд.
-        </section>
+        <PlannerPage
+          places={places}
+          favoritePlaceIds={favoritePlaceIds}
+          yandexApiKey={yandexApiKey}
+          isAuthenticated={!!currentUser}
+          normalizeImageUrl={normalizeImageUrl}
+          formatDuration={formatDuration}
+          formatDistance={formatDistance}
+          onOpenLogin={() => openAccount("login")}
+        />
       )}
 
       {(placeDetails || routeDetails) && (

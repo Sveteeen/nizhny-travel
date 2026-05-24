@@ -65,3 +65,31 @@ export type ViewerState = {
   index: number
   title: string
 }
+
+export type PlannerBuildRequest = {
+  placeIds: number[]
+  startPlaceId?: number
+  optimize?: boolean
+  source?: 'all' | 'favorites'
+}
+
+export type PlannerOrderedPlace = {
+  place_id: number
+  order_index: number
+  name: string
+  address: string
+  latitude: number
+  longitude: number
+  main_photo: string
+  leg_duration_minutes: number | null
+  leg_distance_km: number | null
+}
+
+export type PlannerBuildResponse = {
+  ordered_places: PlannerOrderedPlace[]
+  distance_km: number
+  duration_minutes: number
+  geometry: number[][]
+  optimized: boolean
+  start_place_id: number
+}
