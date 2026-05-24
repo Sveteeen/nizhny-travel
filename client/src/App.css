@@ -554,6 +554,10 @@
   margin: 12px 0 16px;
 }
 
+.map-wrap--route .map {
+  height: 480px;
+}
+
 .map {
   width: 100%;
   height: 240px;
@@ -597,14 +601,22 @@
 }
 
 .planner__my-routes {
-  border: 1px solid #2d456f;
-  background: #15233c;
-  color: #d5e5ff;
+  border: 0;
   border-radius: 10px;
-  padding: 10px 14px;
+  padding: 12px 18px;
   font: inherit;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #3069ff, #6b8bff);
+  box-shadow: 0 6px 18px rgba(47, 109, 255, 0.35);
   cursor: pointer;
   white-space: nowrap;
+  transition: filter 0.15s ease, box-shadow 0.15s ease;
+}
+
+.planner__my-routes:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 8px 22px rgba(47, 109, 255, 0.45);
 }
 
 .planner__header p {
@@ -670,11 +682,22 @@
   border-radius: 12px;
   border: 1px solid transparent;
   cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.planner__place:hover {
+  border-color: #3f67d8;
+  background: #1a2d4d;
 }
 
 .planner__place--selected {
   border-color: #3f67d8;
   background: #152742;
+}
+
+.planner__place--selected:hover {
+  border-color: #4f7fff;
+  background: #1a3158;
 }
 
 .planner__place-photo {
@@ -1037,6 +1060,46 @@
   gap: 8px;
 }
 
+.planner__route-list .route-point--clickable {
+  width: 100%;
+  border: 1px solid transparent;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.planner__route-list .route-point--clickable:hover {
+  border-color: #3f67d8;
+  background: #1a2d4d;
+}
+
+.planner__route-list .route-point--clickable:focus-visible {
+  outline: 2px solid #4f7fff;
+  outline-offset: 2px;
+}
+
+.route-points .route-point--clickable {
+  width: 100%;
+  border: 1px solid transparent;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.route-points .route-point--clickable:hover {
+  border-color: #3f67d8;
+  background: #1a2d4d;
+}
+
+.route-points .route-point--clickable:focus-visible {
+  outline: 2px solid #4f7fff;
+  outline-offset: 2px;
+}
+
 @media (max-width: 1100px) {
   .planner__layout--extended {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -1189,7 +1252,87 @@
 }
 
 .account-modal {
-  width: min(500px, 96vw);
+  width: min(520px, 96vw);
+}
+
+.account-modal__planner-button {
+  border: 0;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #3069ff, #6b8bff);
+  box-shadow: 0 6px 18px rgba(47, 109, 255, 0.35);
+  cursor: pointer;
+  transition: filter 0.15s ease, box-shadow 0.15s ease;
+}
+
+.account-modal__planner-button:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 8px 22px rgba(47, 109, 255, 0.45);
+}
+
+.account-modal__section-title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.account-modal__saved-routes {
+  display: grid;
+  gap: 10px;
+}
+
+.account-modal__saved-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.account-modal__saved-route {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: #15233c;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.account-modal__saved-route:hover {
+  border-color: #3f67d8;
+  background: #1a2d4d;
+}
+
+.account-modal__saved-route-photo {
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.account-modal__saved-route-text {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.account-modal__saved-route-name {
+  font-weight: 600;
+}
+
+.account-modal__saved-route-meta {
+  color: #9eb6e4;
+  font-size: 14px;
 }
 
 .account-modal__header {

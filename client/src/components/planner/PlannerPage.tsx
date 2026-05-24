@@ -42,6 +42,9 @@ type PlannerPageProps = {
   formatDuration: (minutes: number | string) => string
   formatDistance: (distance: number | string) => string
   onOpenLogin: () => void
+  onOpenPlaceDetails: (placeId: number) => void
+  pendingSavedRouteId?: number | null
+  onPendingSavedRouteHandled?: () => void
 }
 
 export const PlannerPage = ({
@@ -53,6 +56,9 @@ export const PlannerPage = ({
   formatDuration,
   formatDistance,
   onOpenLogin,
+  onOpenPlaceDetails,
+  pendingSavedRouteId = null,
+  onPendingSavedRouteHandled,
 }: PlannerPageProps) => {
   const [source, setSource] = useState<'all' | 'favorites'>('all')
   const [search, setSearch] = useState('')
@@ -97,6 +103,43 @@ export const PlannerPage = ({
     if (!isAuthenticated || !showSavedRoutes) return
     void loadSavedRoutes()
   }, [isAuthenticated, showSavedRoutes, loadSavedRoutes])
+
+  useEffect(() => {
+    if (!pendingSavedRouteId) return
+
+    let active = true
+
+    const openPendingRoute = async () => {
+      const token = readAuthToken()
+      if (!token) {
+        onOpenLogin()
+        onPendingSavedRouteHandled?.()
+        return
+      }
+
+      setError(null)
+      setSuccess(null)
+
+      try {
+        const route = await fetchSavedRoute(pendingSavedRouteId, token)
+        if (!active) return
+        setPreview(toPreview(route))
+        setPreviewTitle(route.name)
+        setShowSavedRoutes(false)
+      } catch (openError) {
+        if (!active) return
+        setError(openError instanceof Error ? openError.message : 'Не удалось открыть маршрут.')
+      } finally {
+        if (active) onPendingSavedRouteHandled?.()
+      }
+    }
+
+    void openPendingRoute()
+
+    return () => {
+      active = false
+    }
+  }, [pendingSavedRouteId, onOpenLogin, onPendingSavedRouteHandled])
 
   const availablePlaces = useMemo(() => {
     const list =
@@ -501,20 +544,26 @@ export const PlannerPage = ({
 
               <ol className="planner__route-list">
                 {preview.ordered_places.map((place) => (
-                  <li key={`${place.place_id}-${place.order_index}`} className="route-point">
-                    <span className="route-point__index">{place.order_index}</span>
-                    <div>
-                      <p className="route-point__title">{place.name}</p>
-                      {place.leg_distance_km != null && place.leg_duration_minutes != null && (
-                        <p className="route-point__address">
-                          {formatDistance(place.leg_distance_km)} ·{' '}
-                          {formatDuration(place.leg_duration_minutes)} от предыдущей точки
-                        </p>
-                      )}
-                      {place.leg_distance_km == null && (
-                        <p className="route-point__address">{place.address}</p>
-                      )}
-                    </div>
+                  <li key={`${place.place_id}-${place.order_index}`}>
+                    <button
+                      type="button"
+                      className="route-point route-point--clickable"
+                      onClick={() => onOpenPlaceDetails(place.place_id)}
+                    >
+                      <span className="route-point__index">{place.order_index}</span>
+                      <div>
+                        <p className="route-point__title">{place.name}</p>
+                        {place.leg_distance_km != null && place.leg_duration_minutes != null && (
+                          <p className="route-point__address">
+                            {formatDistance(place.leg_distance_km)} ·{' '}
+                            {formatDuration(place.leg_duration_minutes)} от предыдущей точки
+                          </p>
+                        )}
+                        {place.leg_distance_km == null && (
+                          <p className="route-point__address">{place.address}</p>
+                        )}
+                      </div>
+                    </button>
                   </li>
                 ))}
               </ol>

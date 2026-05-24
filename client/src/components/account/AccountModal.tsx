@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent, type SyntheticEvent } from 'react'
 import {
   fetchMe,
   getApiErrorMessage,
@@ -6,6 +6,8 @@ import {
   updateUser,
   type ApiUser,
 } from '../../api/auth'
+import { fetchSavedRoutes } from '../../api/planner'
+import type { SavedRouteListItem } from '../../types'
 import { ModalShell } from './ModalShell'
 import { normalizeEmail, readAuthToken, saveSession } from './storage'
 import type { PublicUser } from './types'
@@ -18,6 +20,12 @@ type AccountModalProps = {
   onOpenRegister: () => void
   onOpenFavoritePlaces: () => void
   onOpenFavoriteRoutes: () => void
+  onOpenPlanner: () => void
+  onOpenSavedRoute: (routeId: number) => void
+  normalizeImageUrl: (value: string) => string
+  onImageError: (event: SyntheticEvent<HTMLImageElement, Event>) => void
+  formatDuration: (value: number | string) => string
+  formatDistance: (value: number | string) => string
   onLogout: () => void
 }
 
@@ -53,9 +61,17 @@ export const AccountModal = ({
   onOpenRegister,
   onOpenFavoritePlaces,
   onOpenFavoriteRoutes,
+  onOpenPlanner,
+  onOpenSavedRoute,
+  normalizeImageUrl,
+  onImageError,
+  formatDuration,
+  formatDistance,
   onLogout,
 }: AccountModalProps) => {
   const [apiUser, setApiUser] = useState<ApiUser | null>(null)
+  const [savedRoutes, setSavedRoutes] = useState<SavedRouteListItem[]>([])
+  const [savedRoutesLoading, setSavedRoutesLoading] = useState(false)
   const [form, setForm] = useState<ProfileForm>(emptyForm)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
@@ -102,6 +118,33 @@ export const AccountModal = ({
       mounted = false
     }
   }, [])
+
+  useEffect(() => {
+    const token = readAuthToken()
+    if (!token || !apiUser) {
+      setSavedRoutes([])
+      return
+    }
+
+    let mounted = true
+
+    const loadSavedRoutes = async () => {
+      setSavedRoutesLoading(true)
+      try {
+        const routes = await fetchSavedRoutes(token)
+        if (mounted) setSavedRoutes(routes)
+      } catch {
+        if (mounted) setSavedRoutes([])
+      } finally {
+        if (mounted) setSavedRoutesLoading(false)
+      }
+    }
+
+    void loadSavedRoutes()
+    return () => {
+      mounted = false
+    }
+  }, [apiUser])
 
   const handleOpenEdit = () => {
     if (!apiUser) return
@@ -200,6 +243,49 @@ export const AccountModal = ({
           {apiUser.phone && (
             <p className="account-modal__meta">Телефон: {apiUser.phone}</p>
           )}
+          <button
+            className="account-modal__planner-button"
+            type="button"
+            onClick={onOpenPlanner}
+          >
+            Запланировать собственный маршрут
+          </button>
+
+          {savedRoutesLoading && (
+            <p className="account-modal__state account-modal__state--muted">Загрузка маршрутов…</p>
+          )}
+
+          {!savedRoutesLoading && savedRoutes.length > 0 && (
+            <div className="account-modal__saved-routes">
+              <h3 className="account-modal__section-title">Мои маршруты</h3>
+              <ul className="account-modal__saved-list">
+                {savedRoutes.map((route) => (
+                  <li key={route.id}>
+                    <button
+                      type="button"
+                      className="account-modal__saved-route"
+                      onClick={() => onOpenSavedRoute(route.id)}
+                    >
+                      <img
+                        src={normalizeImageUrl(route.main_photo || '')}
+                        alt=""
+                        className="account-modal__saved-route-photo"
+                        onError={onImageError}
+                      />
+                      <span className="account-modal__saved-route-text">
+                        <span className="account-modal__saved-route-name">{route.name}</span>
+                        <span className="account-modal__saved-route-meta">
+                          {formatDistance(route.distance_km)} · {formatDuration(route.duration_minutes)} ·{' '}
+                          {route.places_count} точек
+                        </span>
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div className="account-modal__favorites">
             <button
               className="account-modal__favorites-button"

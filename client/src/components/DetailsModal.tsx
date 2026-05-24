@@ -15,6 +15,7 @@ type DetailsModalProps = {
   formatDistance: (value: number | string) => string
   onImageError: (event: SyntheticEvent<HTMLImageElement, Event>) => void
   onClose: () => void
+  onOpenPlaceDetails: (placeId: number) => void
   onOpenViewer: (images: { src: string; alt: string }[], startIndex: number, title: string) => void
 }
 
@@ -30,6 +31,7 @@ export const DetailsModal = ({
   formatDistance,
   onImageError,
   onClose,
+  onOpenPlaceDetails,
   onOpenViewer,
 }: DetailsModalProps) => (
   <div className="modal" onClick={onClose}>
@@ -111,7 +113,7 @@ export const DetailsModal = ({
           </p>
           <p>{routeDetails.description}</p>
           {!!routeDetails.points.length && (
-            <div className="map-wrap">
+            <div className="map-wrap map-wrap--route">
               {yandexApiKey ? (
                 <RouteMiniMap
                   apiKey={yandexApiKey}
@@ -134,15 +136,29 @@ export const DetailsModal = ({
 
           <h3>Точки маршрута</h3>
           <div className="route-points">
-            {routeDetails.points.map((point) => (
-              <div className="route-point" key={`${routeDetails.id}-${point.order_index}`}>
-                <span className="route-point__index">{point.order_index}</span>
-                <div>
-                  <p className="route-point__title">{point.place?.name ?? 'Точка недоступна'}</p>
-                  {point.place && <p className="route-point__address">{point.place.address}</p>}
+            {routeDetails.points.map((point) =>
+              point.place ? (
+                <button
+                  type="button"
+                  key={`${routeDetails.id}-${point.order_index}`}
+                  className="route-point route-point--clickable"
+                  onClick={() => onOpenPlaceDetails(point.place!.id)}
+                >
+                  <span className="route-point__index">{point.order_index}</span>
+                  <div>
+                    <p className="route-point__title">{point.place.name}</p>
+                    <p className="route-point__address">{point.place.address}</p>
+                  </div>
+                </button>
+              ) : (
+                <div className="route-point" key={`${routeDetails.id}-${point.order_index}`}>
+                  <span className="route-point__index">{point.order_index}</span>
+                  <div>
+                    <p className="route-point__title">Точка недоступна</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ),
+            )}
           </div>
           <h3>Фото по маршруту</h3>
           <div className="gallery">

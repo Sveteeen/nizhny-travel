@@ -39,6 +39,7 @@ function App() {
   const [showFavoriteRoutesOnly, setShowFavoriteRoutesOnly] = useState(false);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [accountInitialView, setAccountInitialView] = useState<"login" | "register">("login");
+  const [pendingPlannerRouteId, setPendingPlannerRouteId] = useState<number | null>(null);
   const [currentUser, setCurrentUser] = useState<{
     name: string;
     email: string;
@@ -197,6 +198,24 @@ function App() {
     setIsAccountOpen(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [loadFavorites]);
+
+  const openPlanner = useCallback(() => {
+    setPendingPlannerRouteId(null);
+    setActiveTab("planner");
+    setIsAccountOpen(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  const openSavedRouteInPlanner = useCallback((routeId: number) => {
+    setPendingPlannerRouteId(routeId);
+    setActiveTab("planner");
+    setIsAccountOpen(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  const handlePendingPlannerRouteHandled = useCallback(() => {
+    setPendingPlannerRouteId(null);
+  }, []);
 
   return (
     <div className="app">
@@ -398,7 +417,10 @@ function App() {
           normalizeImageUrl={normalizeImageUrl}
           formatDuration={formatDuration}
           formatDistance={formatDistance}
+          pendingSavedRouteId={pendingPlannerRouteId}
+          onPendingSavedRouteHandled={handlePendingPlannerRouteHandled}
           onOpenLogin={() => openAccount("login")}
+          onOpenPlaceDetails={openPlaceDetails}
         />
       )}
 
@@ -414,6 +436,7 @@ function App() {
           formatDuration={formatDuration}
           formatDistance={formatDistance}
           onImageError={handleImageFallback}
+          onOpenPlaceDetails={openPlaceDetails}
           onOpenViewer={openViewer}
           onClose={closeDetails}
         />
@@ -473,6 +496,12 @@ function App() {
           onUpdateProfile={handleUpdateProfile}
           onOpenFavoritePlaces={openFavoritePlaces}
           onOpenFavoriteRoutes={openFavoriteRoutes}
+          onOpenPlanner={openPlanner}
+          onOpenSavedRoute={openSavedRouteInPlanner}
+          normalizeImageUrl={normalizeImageUrl}
+          onImageError={handleImageFallback}
+          formatDuration={formatDuration}
+          formatDistance={formatDistance}
         />
       )}
     </div>

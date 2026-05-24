@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type SyntheticEvent } from 'react'
 import { AccountModal } from './AccountModal'
 import { LoginModal } from './LoginModal'
 import { RegisterModal } from './RegisterModal'
@@ -14,6 +14,12 @@ type AccountOverlayProps = {
   onUpdateProfile: (user: PublicUser) => void
   onOpenFavoritePlaces: () => void
   onOpenFavoriteRoutes: () => void
+  onOpenPlanner: () => void
+  onOpenSavedRoute: (routeId: number) => void
+  normalizeImageUrl: (value: string) => string
+  onImageError: (event: SyntheticEvent<HTMLImageElement, Event>) => void
+  formatDuration: (value: number | string) => string
+  formatDistance: (value: number | string) => string
 }
 
 export const AccountOverlay = ({
@@ -25,6 +31,12 @@ export const AccountOverlay = ({
   onUpdateProfile,
   onOpenFavoritePlaces,
   onOpenFavoriteRoutes,
+  onOpenPlanner,
+  onOpenSavedRoute,
+  normalizeImageUrl,
+  onImageError,
+  formatDuration,
+  formatDistance,
 }: AccountOverlayProps) => {
   const [authView, setAuthView] = useState<'login' | 'register'>(initialView)
 
@@ -52,6 +64,12 @@ export const AccountOverlay = ({
         }}
         onOpenFavoritePlaces={onOpenFavoritePlaces}
         onOpenFavoriteRoutes={onOpenFavoriteRoutes}
+        onOpenPlanner={onOpenPlanner}
+        onOpenSavedRoute={onOpenSavedRoute}
+        normalizeImageUrl={normalizeImageUrl}
+        onImageError={onImageError}
+        formatDuration={formatDuration}
+        formatDistance={formatDistance}
         onLogout={handleLogout}
       />
     )

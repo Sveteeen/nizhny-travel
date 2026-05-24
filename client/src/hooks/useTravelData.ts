@@ -101,6 +101,7 @@ export const useTravelData = (isAuthenticated: boolean) => {
   const openPlaceDetails = async (id: number) => {
     try {
       setDetailsLoading(true)
+      setRouteDetails(null)
       const { data } = await axios.get<PlaceDetails>(`${API_URL}/places/${id}`)
       setPlaceDetails(data)
     } finally {
@@ -111,6 +112,7 @@ export const useTravelData = (isAuthenticated: boolean) => {
   const openRouteDetails = async (id: number) => {
     try {
       setDetailsLoading(true)
+      setPlaceDetails(null)
       const { data } = await axios.get<RouteDetails>(`${API_URL}/routes/${id}`)
       setRouteDetails(data)
     } finally {
