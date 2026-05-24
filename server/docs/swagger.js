@@ -478,6 +478,80 @@ const swaggerDocument = {
         },
       },
     },
+    '/api/planner/routes': {
+      get: {
+        tags: ['Planner'],
+        summary: 'Список сохранённых маршрутов пользователя',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          200: {
+            description: 'OK',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'array',
+                  items: { $ref: '#/components/schemas/SavedRouteListItem' },
+                },
+              },
+            },
+          },
+        },
+      },
+      post: {
+        tags: ['Planner'],
+        summary: 'Сохранить построенный маршрут',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/PlannerSaveRequest' },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Маршрут сохранён',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/SavedRouteDetails' },
+              },
+            },
+          },
+        },
+      },
+    },
+    '/api/planner/routes/{id}': {
+      get: {
+        tags: ['Planner'],
+        summary: 'Получить сохранённый маршрут',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'integer' } },
+        ],
+        responses: {
+          200: {
+            description: 'OK',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/SavedRouteDetails' },
+              },
+            },
+          },
+        },
+      },
+      delete: {
+        tags: ['Planner'],
+        summary: 'Удалить сохранённый маршрут',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'integer' } },
+        ],
+        responses: {
+          204: { description: 'Удалено' },
+        },
+      },
+    },
     '/api/upload': {
       post: {
         tags: ['Upload'],
@@ -781,6 +855,39 @@ const swaggerDocument = {
           optimized: { type: 'boolean' },
           start_place_id: { type: 'integer' },
         },
+      },
+      PlannerSaveRequest: {
+        type: 'object',
+        required: ['name', 'preview'],
+        properties: {
+          name: { type: 'string' },
+          preview: { $ref: '#/components/schemas/PlannerBuildResponse' },
+        },
+      },
+      SavedRouteListItem: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer' },
+          name: { type: 'string' },
+          distance_km: { type: 'number' },
+          duration_minutes: { type: 'integer' },
+          places_count: { type: 'integer' },
+          main_photo: { type: 'string', nullable: true },
+          created_at: { type: 'string', format: 'date-time' },
+        },
+      },
+      SavedRouteDetails: {
+        allOf: [
+          { $ref: '#/components/schemas/PlannerBuildResponse' },
+          {
+            type: 'object',
+            properties: {
+              id: { type: 'integer' },
+              name: { type: 'string' },
+              created_at: { type: 'string', format: 'date-time' },
+            },
+          },
+        ],
       },
     },
   },

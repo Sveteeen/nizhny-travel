@@ -1,5 +1,11 @@
 const { Op } = require('sequelize');
-const { Place, FavouritePlace } = require('../db/models');
+const {
+  Place,
+  FavouritePlace,
+  SavedRoute,
+  SavedRoutePlace,
+  sequelize,
+} = require('../db/models');
 const {
   buildWalkingRoute,
   MAX_WALKING_WAYPOINTS,
@@ -176,7 +182,187 @@ const buildRoutePreview = async ({
   };
 };
 
+const formatSavedRouteDetails = (savedRoute) => {
+  const orderedPlaces = [...(savedRoute.route_places ?? [])].sort(
+    (left, right) => left.order_index - right.order_index,
+  );
+
+  return {
+    id: savedRoute.id,
+    name: savedRoute.name,
+    ordered_places: orderedPlaces.map((routePlace) => ({
+      place_id: routePlace.place_id,
+      order_index: routePlace.order_index,
+      name: routePlace.place?.name ?? '',
+      address: routePlace.place?.address ?? '',
+      latitude: Number(routePlace.place?.latitude ?? 0),
+      longitude: Number(routePlace.place?.longitude ?? 0),
+      main_photo: routePlace.place?.main_photo ?? '',
+      leg_duration_minutes: routePlace.leg_duration_minutes,
+      leg_distance_km:
+        routePlace.leg_distance_km != null
+          ? Number(routePlace.leg_distance_km)
+          : null,
+    })),
+    distance_km: Number(savedRoute.distance_km),
+    duration_minutes: savedRoute.duration_minutes,
+    geometry: savedRoute.route_geometry ?? [],
+    optimized: false,
+    start_place_id: savedRoute.start_place_id,
+    created_at: savedRoute.createdAt,
+  };
+};
+
+const saveRoute = async ({ userId, name, preview }) => {
+  const trimmedName = typeof name === 'string' ? name.trim() : '';
+  if (!trimmedName) {
+    const error = new Error('Route name is required');
+    error.code = 'invalid_request';
+    throw error;
+  }
+
+  if (trimmedName.length > 255) {
+    const error = new Error('Route name must be 255 characters or less');
+    error.code = 'invalid_request';
+    throw error;
+  }
+
+  if (!preview?.ordered_places?.length || !preview.geometry?.length) {
+    const error = new Error('Build the route before saving');
+    error.code = 'invalid_request';
+    throw error;
+  }
+
+  return sequelize.transaction(async (transaction) => {
+    const savedRoute = await SavedRoute.create(
+      {
+        user_id: userId,
+        name: trimmedName,
+        distance_km: preview.distance_km,
+        duration_minutes: preview.duration_minutes,
+        route_geometry: preview.geometry,
+        start_place_id: preview.start_place_id ?? preview.ordered_places[0]?.place_id ?? null,
+      },
+      { transaction },
+    );
+
+    await SavedRoutePlace.bulkCreate(
+      preview.ordered_places.map((place) => ({
+        saved_route_id: savedRoute.id,
+        place_id: place.place_id,
+        order_index: place.order_index,
+        leg_duration_minutes: place.leg_duration_minutes,
+        leg_distance_km: place.leg_distance_km,
+      })),
+      { transaction },
+    );
+
+    const fullRoute = await SavedRoute.findOne({
+      where: { id: savedRoute.id, user_id: userId },
+      include: [
+        {
+          model: SavedRoutePlace,
+          as: 'route_places',
+          include: [
+            {
+              model: Place,
+              as: 'place',
+              attributes: ['id', 'name', 'address', 'latitude', 'longitude', 'main_photo'],
+            },
+          ],
+        },
+      ],
+      transaction,
+    });
+
+    return formatSavedRouteDetails(fullRoute);
+  });
+};
+
+const listSavedRoutes = async (userId) => {
+  const routes = await SavedRoute.findAll({
+    where: { user_id: userId },
+    attributes: ['id', 'name', 'distance_km', 'duration_minutes', 'createdAt'],
+    include: [
+      {
+        model: SavedRoutePlace,
+        as: 'route_places',
+        attributes: ['order_index'],
+        include: [
+          {
+            model: Place,
+            as: 'place',
+            attributes: ['main_photo'],
+          },
+        ],
+      },
+    ],
+    order: [['createdAt', 'DESC']],
+  });
+
+  return routes.map((route) => {
+    const firstPlace = [...(route.route_places ?? [])].sort(
+      (left, right) => left.order_index - right.order_index,
+    )[0];
+
+    return {
+      id: route.id,
+      name: route.name,
+      distance_km: Number(route.distance_km),
+      duration_minutes: route.duration_minutes,
+      places_count: route.route_places?.length ?? 0,
+      main_photo: firstPlace?.place?.main_photo ?? null,
+      created_at: route.createdAt,
+    };
+  });
+};
+
+const getSavedRouteById = async ({ userId, savedRouteId }) => {
+  const route = await SavedRoute.findOne({
+    where: { id: savedRouteId, user_id: userId },
+    include: [
+      {
+        model: SavedRoutePlace,
+        as: 'route_places',
+        include: [
+          {
+            model: Place,
+            as: 'place',
+            attributes: ['id', 'name', 'address', 'latitude', 'longitude', 'main_photo'],
+          },
+        ],
+      },
+    ],
+  });
+
+  if (!route) {
+    const error = new Error('Saved route not found');
+    error.code = 'saved_route_not_found';
+    throw error;
+  }
+
+  return formatSavedRouteDetails(route);
+};
+
+const deleteSavedRoute = async ({ userId, savedRouteId }) => {
+  const deleted = await SavedRoute.destroy({
+    where: { id: savedRouteId, user_id: userId },
+  });
+
+  if (!deleted) {
+    const error = new Error('Saved route not found');
+    error.code = 'saved_route_not_found';
+    throw error;
+  }
+
+  return true;
+};
+
 module.exports = {
   buildRoutePreview,
+  saveRoute,
+  listSavedRoutes,
+  getSavedRouteById,
+  deleteSavedRoute,
   MAX_WALKING_WAYPOINTS,
 };

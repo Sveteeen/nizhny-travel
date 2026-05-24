@@ -22,7 +22,7 @@ const mapPlannerError = (error) => {
     };
   }
 
-  if (code === 'places_not_found') {
+  if (code === 'places_not_found' || code === 'saved_route_not_found') {
     return {
       status: 404,
       body: {
@@ -55,6 +55,14 @@ const mapPlannerError = (error) => {
   return { status: 500, body: { error: 'Something went wrong', code } };
 };
 
+const handlePlannerError = (error, res, next) => {
+  const mapped = mapPlannerError(error);
+  if (mapped.status >= 500) {
+    return next(error);
+  }
+  return res.status(mapped.status).json(mapped.body);
+};
+
 const buildRoute = async (req, res, next) => {
   try {
     const { placeIds, startPlaceId, optimize, source } = req.body ?? {};
@@ -69,14 +77,74 @@ const buildRoute = async (req, res, next) => {
 
     return res.json(result);
   } catch (error) {
-    const mapped = mapPlannerError(error);
-    if (mapped.status >= 500) {
-      return next(error);
+    return handlePlannerError(error, res, next);
+  }
+};
+
+const saveRoute = async (req, res, next) => {
+  try {
+    const { name, preview } = req.body ?? {};
+    const result = await plannerService.saveRoute({
+      userId: req.userId,
+      name,
+      preview,
+    });
+
+    return res.status(201).json(result);
+  } catch (error) {
+    return handlePlannerError(error, res, next);
+  }
+};
+
+const listSavedRoutes = async (req, res, next) => {
+  try {
+    const routes = await plannerService.listSavedRoutes(req.userId);
+    return res.json(routes);
+  } catch (error) {
+    return handlePlannerError(error, res, next);
+  }
+};
+
+const getSavedRoute = async (req, res, next) => {
+  try {
+    const savedRouteId = Number(req.params.id);
+    if (!Number.isInteger(savedRouteId) || savedRouteId <= 0) {
+      return res.status(400).json({ error: 'Invalid saved route id' });
     }
-    return res.status(mapped.status).json(mapped.body);
+
+    const route = await plannerService.getSavedRouteById({
+      userId: req.userId,
+      savedRouteId,
+    });
+
+    return res.json(route);
+  } catch (error) {
+    return handlePlannerError(error, res, next);
+  }
+};
+
+const deleteSavedRoute = async (req, res, next) => {
+  try {
+    const savedRouteId = Number(req.params.id);
+    if (!Number.isInteger(savedRouteId) || savedRouteId <= 0) {
+      return res.status(400).json({ error: 'Invalid saved route id' });
+    }
+
+    await plannerService.deleteSavedRoute({
+      userId: req.userId,
+      savedRouteId,
+    });
+
+    return res.status(204).send();
+  } catch (error) {
+    return handlePlannerError(error, res, next);
   }
 };
 
 module.exports = {
   buildRoute,
+  saveRoute,
+  listSavedRoutes,
+  getSavedRoute,
+  deleteSavedRoute,
 };
