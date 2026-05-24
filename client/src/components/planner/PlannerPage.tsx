@@ -1,10 +1,34 @@
-import { useCallback, useMemo, useState } from 'react'
-import { buildPlannerRoute } from '../../api/planner'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  buildPlannerRoute,
+  deleteSavedRoute,
+  fetchSavedRoute,
+  fetchSavedRoutes,
+  savePlannerRoute,
+} from '../../api/planner'
 import { readAuthToken } from '../account/storage'
 import { PlannerRouteMap } from '../maps/PlannerRouteMap'
-import type { PlaceListItem, PlannerBuildResponse } from '../../types'
+import { SaveRouteModal } from './SaveRouteModal'
+import type { PlaceListItem, PlannerBuildResponse, SavedRouteListItem } from '../../types'
 
 const MAX_PLACES = 25
+
+const toPreview = (route: PlannerBuildResponse): PlannerBuildResponse => ({
+  ordered_places: route.ordered_places,
+  distance_km: route.distance_km,
+  duration_minutes: route.duration_minutes,
+  geometry: route.geometry,
+  optimized: route.optimized,
+  start_place_id: route.start_place_id,
+})
+
+const defaultRouteName = () => {
+  const date = new Date().toLocaleDateString('ru-RU', {
+    day: 'numeric',
+    month: 'long',
+  })
+  return `Моя прогулка — ${date}`
+}
 
 type PlannerPageProps = {
   places: PlaceListItem[]
@@ -32,8 +56,39 @@ export const PlannerPage = ({
   const [selectedIds, setSelectedIds] = useState<number[]>([])
   const [startPlaceId, setStartPlaceId] = useState<number | null>(null)
   const [preview, setPreview] = useState<PlannerBuildResponse | null>(null)
+  const [previewTitle, setPreviewTitle] = useState<string | null>(null)
   const [building, setBuilding] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+
+  const [showSavedRoutes, setShowSavedRoutes] = useState(false)
+  const [savedRoutes, setSavedRoutes] = useState<SavedRouteListItem[]>([])
+  const [savedRoutesLoading, setSavedRoutesLoading] = useState(false)
+  const [savedRouteActionId, setSavedRouteActionId] = useState<number | null>(null)
+
+  const [saveModalOpen, setSaveModalOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+
+  const loadSavedRoutes = useCallback(async () => {
+    const token = readAuthToken()
+    if (!token) return
+
+    setSavedRoutesLoading(true)
+    try {
+      const routes = await fetchSavedRoutes(token)
+      setSavedRoutes(routes)
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'Не удалось загрузить маршруты.')
+    } finally {
+      setSavedRoutesLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!isAuthenticated || !showSavedRoutes) return
+    void loadSavedRoutes()
+  }, [isAuthenticated, showSavedRoutes, loadSavedRoutes])
 
   const availablePlaces = useMemo(() => {
     const list =
@@ -61,7 +116,9 @@ export const PlannerPage = ({
 
   const togglePlace = useCallback((placeId: number) => {
     setPreview(null)
+    setPreviewTitle(null)
     setError(null)
+    setSuccess(null)
 
     setSelectedIds((prev) => {
       if (prev.includes(placeId)) {
@@ -89,7 +146,9 @@ export const PlannerPage = ({
 
     setSource(nextSource)
     setPreview(null)
+    setPreviewTitle(null)
     setError(null)
+    setSuccess(null)
     setSelectedIds([])
     setStartPlaceId(null)
   }
@@ -102,7 +161,9 @@ export const PlannerPage = ({
 
     setBuilding(true)
     setError(null)
+    setSuccess(null)
     setPreview(null)
+    setPreviewTitle(null)
 
     try {
       const token = readAuthToken()
@@ -123,6 +184,84 @@ export const PlannerPage = ({
     }
   }
 
+  const handleOpenSavedRoutes = () => {
+    if (!isAuthenticated) {
+      onOpenLogin()
+      return
+    }
+    setShowSavedRoutes((current) => !current)
+  }
+
+  const handleOpenSavedRoute = async (routeId: number) => {
+    const token = readAuthToken()
+    if (!token) {
+      onOpenLogin()
+      return
+    }
+
+    setSavedRouteActionId(routeId)
+    setError(null)
+    setSuccess(null)
+
+    try {
+      const route = await fetchSavedRoute(routeId, token)
+      setPreview(toPreview(route))
+      setPreviewTitle(route.name)
+      setShowSavedRoutes(false)
+    } catch (openError) {
+      setError(openError instanceof Error ? openError.message : 'Не удалось открыть маршрут.')
+    } finally {
+      setSavedRouteActionId(null)
+    }
+  }
+
+  const handleDeleteSavedRoute = async (routeId: number) => {
+    const token = readAuthToken()
+    if (!token) return
+
+    setSavedRouteActionId(routeId)
+    setError(null)
+
+    try {
+      await deleteSavedRoute(routeId, token)
+      setSavedRoutes((current) => current.filter((route) => route.id !== routeId))
+      setSuccess('Маршрут удалён.')
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : 'Не удалось удалить маршрут.')
+    } finally {
+      setSavedRouteActionId(null)
+    }
+  }
+
+  const handleSaveRoute = async (name: string) => {
+    if (!preview) return
+
+    const token = readAuthToken()
+    if (!token) {
+      onOpenLogin()
+      return
+    }
+
+    setSaving(true)
+    setSaveError(null)
+
+    try {
+      const saved = await savePlannerRoute({ name, preview }, token)
+      setSaveModalOpen(false)
+      setPreviewTitle(saved.name)
+      setSuccess('Маршрут сохранён.')
+      if (showSavedRoutes) {
+        await loadSavedRoutes()
+      }
+    } catch (saveRouteError) {
+      setSaveError(
+        saveRouteError instanceof Error ? saveRouteError.message : 'Не удалось сохранить маршрут.',
+      )
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const mapPoints = useMemo(
     () =>
       (preview?.ordered_places ?? []).map((place) => ({
@@ -137,12 +276,67 @@ export const PlannerPage = ({
   return (
     <section className="planner">
       <div className="planner__header">
-        <h2>Планировщик маршрутов</h2>
-        <p>
-          Выберите места, укажите стартовую точку и постройте пеший маршрут по дорогам.
-          Можно выбрать до {MAX_PLACES} точек.
-        </p>
+        <div className="planner__header-row">
+          <div>
+            <h2>Планировщик маршрутов</h2>
+            <p>
+              Выберите места, укажите стартовую точку и постройте пеший маршрут по дорогам.
+              Можно выбрать до {MAX_PLACES} точек.
+            </p>
+          </div>
+          <button type="button" className="planner__my-routes" onClick={handleOpenSavedRoutes}>
+            {showSavedRoutes ? 'Скрыть мои маршруты' : 'Мои маршруты'}
+          </button>
+        </div>
       </div>
+
+      {showSavedRoutes && (
+        <section className="planner-saved">
+          <h3>Сохранённые маршруты</h3>
+          {savedRoutesLoading && <p className="planner__hint">Загрузка…</p>}
+          {!savedRoutesLoading && savedRoutes.length === 0 && (
+            <p className="planner__hint">Пока нет сохранённых маршрутов.</p>
+          )}
+          <ul className="planner-saved__list">
+            {savedRoutes.map((route) => (
+              <li key={route.id} className="planner-saved__item">
+                {route.main_photo && (
+                  <img
+                    src={normalizeImageUrl(route.main_photo)}
+                    alt=""
+                    className="planner-saved__photo"
+                  />
+                )}
+                <div className="planner-saved__info">
+                  <p className="planner-saved__name">{route.name}</p>
+                  <p className="planner-saved__meta">
+                    {formatDistance(route.distance_km)} · {formatDuration(route.duration_minutes)} ·{' '}
+                    {route.places_count} точек
+                  </p>
+                </div>
+                <div className="planner-saved__actions">
+                  <button
+                    type="button"
+                    className="planner-saved__open"
+                    disabled={savedRouteActionId === route.id}
+                    onClick={() => void handleOpenSavedRoute(route.id)}
+                  >
+                    Открыть
+                  </button>
+                  <button
+                    type="button"
+                    className="planner-saved__delete"
+                    disabled={savedRouteActionId === route.id}
+                    onClick={() => void handleDeleteSavedRoute(route.id)}
+                  >
+                    Удалить
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <div className="planner__source">
         <button
@@ -173,7 +367,9 @@ export const PlannerPage = ({
           />
 
           {source === 'favorites' && availablePlaces.length === 0 && (
-            <p className="planner__hint">В избранном пока нет мест. Добавьте их на вкладке «Достопримечательности».</p>
+            <p className="planner__hint">
+              В избранном пока нет мест. Добавьте их на вкладке «Достопримечательности».
+            </p>
           )}
 
           <ul className="planner__places">
@@ -248,10 +444,13 @@ export const PlannerPage = ({
             </button>
 
             {error && <p className="planner__error">{error}</p>}
+            {success && <p className="planner__success">{success}</p>}
           </div>
 
           {preview && (
             <div className="planner__preview">
+              {previewTitle && <h3 className="planner__preview-title">{previewTitle}</h3>}
+
               <div className="planner__stats">
                 <span>{formatDistance(preview.distance_km)}</span>
                 <span>{formatDuration(preview.duration_minutes)}</span>
@@ -259,6 +458,23 @@ export const PlannerPage = ({
                 {!preview.optimized && (
                   <span className="planner__stats-note">Порядок как вы выбрали</span>
                 )}
+              </div>
+
+              <div className="planner__preview-actions">
+                <button
+                  type="button"
+                  className="planner__save"
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      onOpenLogin()
+                      return
+                    }
+                    setSaveError(null)
+                    setSaveModalOpen(true)
+                  }}
+                >
+                  Сохранить маршрут
+                </button>
               </div>
 
               <ol className="planner__route-list">
@@ -269,8 +485,8 @@ export const PlannerPage = ({
                       <p className="route-point__title">{place.name}</p>
                       {place.leg_distance_km != null && place.leg_duration_minutes != null && (
                         <p className="route-point__address">
-                          {formatDistance(place.leg_distance_km)} · {formatDuration(place.leg_duration_minutes)} от
-                          предыдущей точки
+                          {formatDistance(place.leg_distance_km)} ·{' '}
+                          {formatDuration(place.leg_duration_minutes)} от предыдущей точки
                         </p>
                       )}
                       {place.leg_distance_km == null && (
@@ -294,6 +510,16 @@ export const PlannerPage = ({
           )}
         </div>
       </div>
+
+      {saveModalOpen && preview && (
+        <SaveRouteModal
+          defaultName={defaultRouteName()}
+          saving={saving}
+          error={saveError}
+          onClose={() => setSaveModalOpen(false)}
+          onSave={(name) => void handleSaveRoute(name)}
+        />
+      )}
     </section>
   )
 }

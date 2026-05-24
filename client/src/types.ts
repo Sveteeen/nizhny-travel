@@ -93,3 +93,24 @@ export type PlannerBuildResponse = {
   optimized: boolean
   start_place_id: number
 }
+
+export type SavedRouteListItem = {
+  id: number
+  name: string
+  distance_km: number
+  duration_minutes: number
+  places_count: number
+  main_photo: string | null
+  created_at: string
+}
+
+export type SavedRouteDetails = PlannerBuildResponse & {
+  id: number
+  name: string
+  created_at: string
+}
+
+export type PlannerSaveRequest = {
+  name: string
+  preview: PlannerBuildResponse
+}
