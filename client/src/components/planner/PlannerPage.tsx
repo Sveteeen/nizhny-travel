@@ -8,7 +8,10 @@ import {
 } from '../../api/planner'
 import { readAuthToken } from '../account/storage'
 import { PlannerRouteMap } from '../maps/PlannerRouteMap'
+import { PlannerSelectionMap } from '../maps/PlannerSelectionMap'
+import { buildYandexMapsUrl } from './plannerUtils'
 import { SaveRouteModal } from './SaveRouteModal'
+import { SelectedPlacesList } from './SelectedPlacesList'
 import type { PlaceListItem, PlannerBuildResponse, SavedRouteListItem } from '../../types'
 
 const MAX_PLACES = 25
@@ -70,6 +73,11 @@ export const PlannerPage = ({
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
+  const clearPreview = useCallback(() => {
+    setPreview(null)
+    setPreviewTitle(null)
+  }, [])
+
   const loadSavedRoutes = useCallback(async () => {
     const token = readAuthToken()
     if (!token) return
@@ -114,29 +122,46 @@ export const PlannerPage = ({
     [selectedIds, places],
   )
 
-  const togglePlace = useCallback((placeId: number) => {
-    setPreview(null)
-    setPreviewTitle(null)
-    setError(null)
-    setSuccess(null)
+  const togglePlace = useCallback(
+    (placeId: number) => {
+      clearPreview()
+      setError(null)
+      setSuccess(null)
 
-    setSelectedIds((prev) => {
-      if (prev.includes(placeId)) {
-        const next = prev.filter((id) => id !== placeId)
-        setStartPlaceId((current) => (current === placeId ? next[0] ?? null : current))
+      setSelectedIds((prev) => {
+        if (prev.includes(placeId)) {
+          const next = prev.filter((id) => id !== placeId)
+          setStartPlaceId((current) => (current === placeId ? next[0] ?? null : current))
+          return next
+        }
+
+        if (prev.length >= MAX_PLACES) {
+          setError(`Можно выбрать не больше ${MAX_PLACES} мест.`)
+          return prev
+        }
+
+        const next = [...prev, placeId]
+        setStartPlaceId((current) => current ?? placeId)
         return next
-      }
+      })
+    },
+    [clearPreview],
+  )
 
-      if (prev.length >= MAX_PLACES) {
-        setError(`Можно выбрать не больше ${MAX_PLACES} мест.`)
-        return prev
-      }
-
-      const next = [...prev, placeId]
-      setStartPlaceId((current) => current ?? placeId)
-      return next
-    })
-  }, [])
+  const reorderSelected = useCallback(
+    (fromIndex: number, toIndex: number) => {
+      clearPreview()
+      setError(null)
+      setSuccess(null)
+      setSelectedIds((prev) => {
+        const next = [...prev]
+        const [moved] = next.splice(fromIndex, 1)
+        next.splice(toIndex, 0, moved)
+        return next
+      })
+    },
+    [clearPreview],
+  )
 
   const handleSourceChange = (nextSource: 'all' | 'favorites') => {
     if (nextSource === 'favorites' && !isAuthenticated) {
@@ -145,8 +170,7 @@ export const PlannerPage = ({
     }
 
     setSource(nextSource)
-    setPreview(null)
-    setPreviewTitle(null)
+    clearPreview()
     setError(null)
     setSuccess(null)
     setSelectedIds([])
@@ -162,8 +186,7 @@ export const PlannerPage = ({
     setBuilding(true)
     setError(null)
     setSuccess(null)
-    setPreview(null)
-    setPreviewTitle(null)
+    clearPreview()
 
     try {
       const token = readAuthToken()
@@ -269,7 +292,21 @@ export const PlannerPage = ({
         longitude: Number(place.longitude),
         orderIndex: place.order_index,
         name: place.name,
+        mainPhoto: place.main_photo ?? '',
       })),
+    [preview],
+  )
+
+  const yandexMapsUrl = useMemo(
+    () =>
+      preview
+        ? buildYandexMapsUrl(
+            preview.ordered_places.map((place) => ({
+              latitude: Number(place.latitude),
+              longitude: Number(place.longitude),
+            })),
+          )
+        : null,
     [preview],
   )
 
@@ -280,8 +317,8 @@ export const PlannerPage = ({
           <div>
             <h2>Планировщик маршрутов</h2>
             <p>
-              Выберите места, укажите стартовую точку и постройте пеший маршрут по дорогам.
-              Можно выбрать до {MAX_PLACES} точек.
+              Выберите места на карте или в списке, перетащите их для изменения порядка и постройте
+              пеший маршрут. Можно выбрать до {MAX_PLACES} точек.
             </p>
           </div>
           <button type="button" className="planner__my-routes" onClick={handleOpenSavedRoutes}>
@@ -356,7 +393,7 @@ export const PlannerPage = ({
         </button>
       </div>
 
-      <div className="planner__layout">
+      <div className="planner__layout planner__layout--extended">
         <aside className="planner__panel">
           <input
             className="filters__control"
@@ -399,65 +436,29 @@ export const PlannerPage = ({
           </ul>
         </aside>
 
-        <div className="planner__main">
-          <div className="planner__sidebar">
-            <h3>Выбрано: {selectedIds.length}</h3>
+        <div className="planner__center">
+          {!preview && yandexApiKey && availablePlaces.length > 0 && (
+            <PlannerSelectionMap
+              apiKey={yandexApiKey}
+              places={availablePlaces}
+              selectedIds={selectedIds}
+              normalizeImageUrl={normalizeImageUrl}
+              onTogglePlace={togglePlace}
+            />
+          )}
 
-            {selectedPlaces.length === 0 && (
-              <p className="planner__hint">Отметьте места в списке слева.</p>
-            )}
-
-            {selectedPlaces.length > 0 && (
-              <ul className="planner__selected">
-                {selectedPlaces.map((place) => (
-                  <li key={place.id} className="planner__selected-item">
-                    <label className="planner__start">
-                      <input
-                        type="radio"
-                        name="planner-start"
-                        checked={startPlaceId === place.id}
-                        onChange={() => setStartPlaceId(place.id)}
-                      />
-                      <span>Старт</span>
-                    </label>
-                    <span className="planner__selected-name">{place.name}</span>
-                    <button
-                      type="button"
-                      className="planner__remove"
-                      onClick={() => togglePlace(place.id)}
-                      aria-label={`Убрать ${place.name}`}
-                    >
-                      ×
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            <button
-              type="button"
-              className="planner__build"
-              disabled={building || selectedIds.length < 2}
-              onClick={() => void handleBuild()}
-            >
-              {building ? 'Строим маршрут…' : 'Построить маршрут'}
-            </button>
-
-            {error && <p className="planner__error">{error}</p>}
-            {success && <p className="planner__success">{success}</p>}
-          </div>
+          {!preview && !yandexApiKey && (
+            <div className="map map--big map--fallback">Не настроен ключ Яндекс.Карт</div>
+          )}
 
           {preview && (
-            <div className="planner__preview">
+            <div className="planner__preview planner__preview--animate">
               {previewTitle && <h3 className="planner__preview-title">{previewTitle}</h3>}
 
               <div className="planner__stats">
                 <span>{formatDistance(preview.distance_km)}</span>
                 <span>{formatDuration(preview.duration_minutes)}</span>
                 <span>{preview.ordered_places.length} точек</span>
-                {!preview.optimized && (
-                  <span className="planner__stats-note">Порядок как вы выбрали</span>
-                )}
               </div>
 
               <div className="planner__preview-actions">
@@ -475,7 +476,28 @@ export const PlannerPage = ({
                 >
                   Сохранить маршрут
                 </button>
+                {yandexMapsUrl && (
+                  <a
+                    className="planner__external-link"
+                    href={yandexMapsUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Открыть в Яндекс.Картах
+                  </a>
+                )}
               </div>
+
+              {yandexApiKey ? (
+                <PlannerRouteMap
+                  apiKey={yandexApiKey}
+                  geometry={preview.geometry}
+                  points={mapPoints}
+                  normalizeImageUrl={normalizeImageUrl}
+                />
+              ) : (
+                <div className="map map--big map--fallback">Не настроен ключ Яндекс.Карт</div>
+              )}
 
               <ol className="planner__route-list">
                 {preview.ordered_places.map((place) => (
@@ -496,19 +518,45 @@ export const PlannerPage = ({
                   </li>
                 ))}
               </ol>
-
-              {yandexApiKey ? (
-                <PlannerRouteMap
-                  apiKey={yandexApiKey}
-                  geometry={preview.geometry}
-                  points={mapPoints}
-                />
-              ) : (
-                <div className="map map--big map--fallback">Не настроен ключ Яндекс.Карт</div>
-              )}
             </div>
           )}
         </div>
+
+        <aside className="planner__sidebar">
+          <h3>Выбрано: {selectedIds.length}</h3>
+
+          {selectedPlaces.length === 0 && (
+            <p className="planner__hint">Отметьте места в списке или на карте.</p>
+          )}
+
+          {selectedPlaces.length > 0 && (
+            <>
+              <p className="planner__hint">Перетащите строки, чтобы изменить порядок.</p>
+              <SelectedPlacesList
+                places={selectedPlaces}
+                startPlaceId={startPlaceId}
+                onStartChange={(placeId) => {
+                  clearPreview()
+                  setStartPlaceId(placeId)
+                }}
+                onRemove={togglePlace}
+                onReorder={reorderSelected}
+              />
+            </>
+          )}
+
+          <button
+            type="button"
+            className="planner__build"
+            disabled={building || selectedIds.length < 2}
+            onClick={() => void handleBuild()}
+          >
+            {building ? 'Строим маршрут…' : preview ? 'Пересчитать маршрут' : 'Построить маршрут'}
+          </button>
+
+          {error && <p className="planner__error">{error}</p>}
+          {success && <p className="planner__success">{success}</p>}
+        </aside>
       </div>
 
       {saveModalOpen && preview && (

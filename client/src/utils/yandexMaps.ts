@@ -1,5 +1,64 @@
 const YMAPS_SCRIPT_ID = 'yandex-maps-script'
 
+export const NIZHNY_NOVGOROD_CENTER: [number, number] = [56.3269, 44.0059]
+const DEFAULT_CITY_ZOOM = 12
+const MIN_CITY_ZOOM = 11
+
+type FitMapToPointsOptions = {
+  zoomMargin?: number
+  minZoom?: number
+  maxFitZoom?: number
+  maxFitZoomTarget?: number
+}
+
+export const fitMapToPoints = (
+  map: YMapsMapInstance,
+  points: number[][],
+  options: FitMapToPointsOptions = {},
+): void => {
+  const zoomMargin = options.zoomMargin ?? 48
+  const minZoom = options.minZoom ?? MIN_CITY_ZOOM
+
+  if (points.length === 0) {
+    map.setCenter(NIZHNY_NOVGOROD_CENTER, DEFAULT_CITY_ZOOM)
+    return
+  }
+
+  if (points.length === 1) {
+    map.setCenter(points[0], 13)
+    return
+  }
+
+  const lats = points.map((point) => point[0])
+  const lngs = points.map((point) => point[1])
+  const bounds: number[][] = [
+    [Math.min(...lats), Math.min(...lngs)],
+    [Math.max(...lats), Math.max(...lngs)],
+  ]
+
+  const fitResult = map.setBounds(bounds, { checkZoomRange: true, zoomMargin })
+
+  const applyZoomLimits = () => {
+    const currentZoom = map.getZoom()
+    if (typeof currentZoom !== 'number') return
+
+    if (currentZoom < minZoom) {
+      map.setCenter(NIZHNY_NOVGOROD_CENTER, minZoom)
+      return
+    }
+
+    if (options.maxFitZoom !== undefined && currentZoom > options.maxFitZoom) {
+      map.setZoom(options.maxFitZoomTarget ?? options.maxFitZoom - 1, { duration: 0 })
+    }
+  }
+
+  if (fitResult && typeof fitResult.then === 'function') {
+    fitResult.then(applyZoomLimits)
+  } else {
+    applyZoomLimits()
+  }
+}
+
 export type YMapsGeoObject = {
   events: { add: (event: string, handler: () => void) => void }
   geometry?: { getBounds: () => number[][] }

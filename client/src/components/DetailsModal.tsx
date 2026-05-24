@@ -115,11 +115,15 @@ export const DetailsModal = ({
               {yandexApiKey ? (
                 <RouteMiniMap
                   apiKey={yandexApiKey}
+                  normalizeImageUrl={normalizeImageUrl}
                   points={routeDetails.points
                     .filter((point) => point.place)
                     .map((point) => ({
                       latitude: Number(point.place!.latitude),
                       longitude: Number(point.place!.longitude),
+                      orderIndex: point.order_index,
+                      name: point.place!.name,
+                      mainPhoto: point.place!.main_photo,
                     }))}
                 />
               ) : (

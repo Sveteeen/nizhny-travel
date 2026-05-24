@@ -1,6 +1,11 @@
 import { useEffect, useRef } from 'react'
 import type { PlaceListItem } from '../../types'
-import { loadYandexMaps, type YMapsMapInstance } from '../../utils/yandexMaps'
+import {
+  fitMapToPoints,
+  loadYandexMaps,
+  NIZHNY_NOVGOROD_CENTER,
+  type YMapsMapInstance,
+} from '../../utils/yandexMaps'
 
 type PlacesOverviewMapProps = {
   apiKey: string
@@ -23,11 +28,15 @@ export const PlacesOverviewMap = ({ apiKey, places, normalizeImageUrl, onOpenDet
         const ymaps = window.ymaps
 
         mapInstanceRef.current?.destroy()
-        const map = new ymaps.Map(mapRef.current, {
-          center: [56.3269, 44.0059],
-          zoom: 12,
-          controls: ['zoomControl'],
-        })
+        const map = new ymaps.Map(
+          mapRef.current,
+          {
+            center: NIZHNY_NOVGOROD_CENTER,
+            zoom: 12,
+            controls: ['zoomControl'],
+          },
+          { minZoom: 10 },
+        )
         mapInstanceRef.current = map
 
         const bounds: number[][] = []
@@ -73,27 +82,7 @@ export const PlacesOverviewMap = ({ apiKey, places, normalizeImageUrl, onOpenDet
           map.geoObjects.add(marker)
         })
 
-        if (bounds.length > 1) {
-          const fitResult = map.setBounds(bounds, {
-            checkZoomRange: true,
-            zoomMargin: 45,
-          })
-
-          const limitOverviewZoom = () => {
-            const currentZoom = map.getZoom()
-            if (typeof currentZoom === 'number' && currentZoom > 12) {
-              map.setZoom(11, { duration: 0 })
-            }
-          }
-
-          if (fitResult && typeof fitResult.then === 'function') {
-            fitResult.then(limitOverviewZoom)
-          } else {
-            limitOverviewZoom()
-          }
-        } else if (bounds.length === 1) {
-          map.setCenter(bounds[0], 13)
-        }
+        fitMapToPoints(map, bounds, { zoomMargin: 45, maxFitZoom: 12, maxFitZoomTarget: 11 })
       } catch {
         // no-op
       }

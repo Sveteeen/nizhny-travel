@@ -405,7 +405,8 @@
 }
 
 .modal__content,
-.filter-select__menu {
+.filter-select__menu,
+.planner__panel {
   scrollbar-width: thin;
 }
 
@@ -417,13 +418,19 @@
   scrollbar-color: #3f5f94 #101c31;
 }
 
+.planner__panel {
+  scrollbar-color: #3f5f94 #101a2d;
+}
+
 .modal__content::-webkit-scrollbar,
-.filter-select__menu::-webkit-scrollbar {
+.filter-select__menu::-webkit-scrollbar,
+.planner__panel::-webkit-scrollbar {
   width: 8px;
 }
 
 .modal__content::-webkit-scrollbar-track,
-.filter-select__menu::-webkit-scrollbar-track {
+.filter-select__menu::-webkit-scrollbar-track,
+.planner__panel::-webkit-scrollbar-track {
   background: transparent;
   margin: 8px 0;
 }
@@ -440,13 +447,21 @@
   border: 2px solid #101c31;
 }
 
+.planner__panel::-webkit-scrollbar-thumb {
+  background: #2d456f;
+  border-radius: 999px;
+  border: 2px solid #101a2d;
+}
+
 .modal__content::-webkit-scrollbar-thumb:hover,
-.filter-select__menu::-webkit-scrollbar-thumb:hover {
+.filter-select__menu::-webkit-scrollbar-thumb:hover,
+.planner__panel::-webkit-scrollbar-thumb:hover {
   background: #4a7ac7;
 }
 
 .modal__content::-webkit-scrollbar-corner,
-.filter-select__menu::-webkit-scrollbar-corner {
+.filter-select__menu::-webkit-scrollbar-corner,
+.planner__panel::-webkit-scrollbar-corner {
   background: transparent;
 }
 
@@ -710,14 +725,104 @@
   gap: 8px;
 }
 
+.planner__layout--extended {
+  grid-template-columns: minmax(240px, 320px) minmax(0, 1fr) minmax(240px, 300px);
+}
+
+.planner__center {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.planner-map-wrap {
+  display: grid;
+  gap: 8px;
+}
+
+.planner-map-wrap__hint {
+  margin: 0;
+}
+
+.planner-selection-map {
+  min-height: min(72vh, 760px);
+}
+
+.planner__external-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #2d456f;
+  background: #15233c;
+  color: #d5e5ff;
+  text-decoration: none;
+  font: inherit;
+}
+
+.planner__external-link:hover {
+  border-color: #4f7fff;
+  color: #fff;
+}
+
+.planner__preview--animate {
+  animation: planner-preview-in 0.35s ease-out;
+}
+
+.planner-route-map--animate {
+  animation: planner-map-in 0.45s ease-out;
+}
+
+@keyframes planner-preview-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes planner-map-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
 .planner__selected-item {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto auto 1fr auto;
   gap: 8px;
   align-items: center;
   padding: 8px 10px;
   border-radius: 10px;
   background: #15233c;
+  border: 1px solid transparent;
+  cursor: grab;
+}
+
+.planner__selected-item--dragging {
+  opacity: 0.45;
+  cursor: grabbing;
+}
+
+.planner__selected-item--over {
+  border-color: #4f7fff;
+  background: #1a2f52;
+}
+
+.planner__drag-handle {
+  color: #6b84b8;
+  font-size: 14px;
+  line-height: 1;
+  user-select: none;
+  letter-spacing: -2px;
 }
 
 .planner__start {
@@ -787,13 +892,21 @@
 }
 
 .planner__save {
-  border: 1px solid #4f7fff;
-  background: transparent;
-  color: #d5e5ff;
+  border: 0;
   border-radius: 10px;
-  padding: 10px 14px;
+  padding: 12px 18px;
   font: inherit;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #3069ff, #6b8bff);
+  box-shadow: 0 6px 18px rgba(47, 109, 255, 0.35);
   cursor: pointer;
+  transition: filter 0.15s ease, box-shadow 0.15s ease;
+}
+
+.planner__save:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 8px 22px rgba(47, 109, 255, 0.45);
 }
 
 .planner-saved {
@@ -916,10 +1029,6 @@
   font-size: 14px;
 }
 
-.planner__stats-note {
-  color: #9eb6e4;
-}
-
 .planner__route-list {
   list-style: none;
   margin: 0;
@@ -928,13 +1037,33 @@
   gap: 8px;
 }
 
+@media (max-width: 1100px) {
+  .planner__layout--extended {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .planner__center {
+    grid-column: 1 / -1;
+    order: -1;
+  }
+}
+
 @media (max-width: 900px) {
-  .planner__layout {
+  .planner__layout,
+  .planner__layout--extended {
     grid-template-columns: 1fr;
+  }
+
+  .planner__center {
+    order: 0;
   }
 
   .planner__panel {
     max-height: none;
+  }
+
+  .planner-selection-map {
+    min-height: 360px;
   }
 }
 

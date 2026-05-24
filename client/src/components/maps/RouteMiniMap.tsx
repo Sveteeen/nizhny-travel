@@ -1,13 +1,16 @@
 import { useEffect, useRef } from 'react'
 import {
+  fitMapToPoints,
   loadYandexRouter,
   type YMapsMapInstance,
   type YMapsMultiRoute,
 } from '../../utils/yandexMaps'
+import { createPhotoRouteMarker, type PhotoRouteMarkerPoint } from './photoRouteMarker'
 
 type RouteMiniMapProps = {
   apiKey: string
-  points: Array<{ latitude: number; longitude: number }>
+  normalizeImageUrl: (value: string) => string
+  points: PhotoRouteMarkerPoint[]
 }
 
 const ROUTE_STYLE = {
@@ -16,13 +19,24 @@ const ROUTE_STYLE = {
   routeOpenStrokeColor: '#2f6dff',
   routeOpenStrokeWidth: 4,
   boundsAutoApply: true,
-  wayPointVisible: true,
+  wayPointVisible: false,
+}
+
+const addPhotoMarkers = (
+  map: YMapsMapInstance,
+  ymaps: NonNullable<typeof window.ymaps>,
+  points: PhotoRouteMarkerPoint[],
+  normalizeImageUrl: (value: string) => string,
+) => {
+  points.forEach((point) => {
+    map.geoObjects.add(createPhotoRouteMarker(ymaps, point, normalizeImageUrl))
+  })
 }
 
 const addStraightLineFallback = (
   map: YMapsMapInstance,
   ymaps: NonNullable<typeof window.ymaps>,
-  points: RouteMiniMapProps['points'],
+  points: PhotoRouteMarkerPoint[],
 ) => {
   const routeLine = new ymaps.Polyline(
     points.map((point) => [point.latitude, point.longitude]),
@@ -31,13 +45,13 @@ const addStraightLineFallback = (
   )
 
   map.geoObjects.add(routeLine)
-  map.setBounds(routeLine.geometry!.getBounds(), {
-    checkZoomRange: true,
-    zoomMargin: 20,
-  })
+  const routeBounds = routeLine.geometry?.getBounds()
+  if (routeBounds) {
+    fitMapToPoints(map, routeBounds, { zoomMargin: 20 })
+  }
 }
 
-export const RouteMiniMap = ({ apiKey, points }: RouteMiniMapProps) => {
+export const RouteMiniMap = ({ apiKey, points, normalizeImageUrl }: RouteMiniMapProps) => {
   const mapRef = useRef<HTMLDivElement | null>(null)
   const mapInstanceRef = useRef<YMapsMapInstance | null>(null)
   const multiRouteRef = useRef<YMapsMultiRoute | null>(null)
@@ -57,26 +71,26 @@ export const RouteMiniMap = ({ apiKey, points }: RouteMiniMapProps) => {
         mapInstanceRef.current = null
         multiRouteRef.current = null
 
-        mapInstanceRef.current = new ymaps.Map(mapRef.current, {
-          center: [center.latitude, center.longitude],
-          zoom: 13,
-          controls: ['zoomControl'],
-        })
+        mapInstanceRef.current = new ymaps.Map(
+          mapRef.current,
+          {
+            center: [center.latitude, center.longitude],
+            zoom: 13,
+            controls: ['zoomControl'],
+          },
+          { minZoom: 10 },
+        )
+
+        addPhotoMarkers(mapInstanceRef.current, ymaps, points, normalizeImageUrl)
 
         if (points.length < 2) {
-          const marker = new ymaps.Placemark(
-            [center.latitude, center.longitude],
-            { iconCaption: '1' },
-            { preset: 'islands#blueCircleDotIcon' },
-          )
-          mapInstanceRef.current.geoObjects.add(marker)
+          fitMapToPoints(mapInstanceRef.current, [[center.latitude, center.longitude]], {
+            zoomMargin: 20,
+          })
           return
         }
 
-        const referencePoints = points.map((point) => [
-          point.latitude,
-          point.longitude,
-        ])
+        const referencePoints = points.map((point) => [point.latitude, point.longitude])
 
         const multiRoute = new ymaps.multiRouter!.MultiRoute(
           {
@@ -109,7 +123,7 @@ export const RouteMiniMap = ({ apiKey, points }: RouteMiniMapProps) => {
       mapInstanceRef.current?.destroy()
       mapInstanceRef.current = null
     }
-  }, [apiKey, points])
+  }, [apiKey, points, normalizeImageUrl])
 
   return <div ref={mapRef} className="map" />
 }
