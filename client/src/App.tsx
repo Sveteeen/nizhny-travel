@@ -37,6 +37,7 @@ function App() {
   const [showFavoritePlacesOnly, setShowFavoritePlacesOnly] = useState(false);
   const [showFavoriteRoutesOnly, setShowFavoriteRoutesOnly] = useState(false);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
+  const [accountInitialView, setAccountInitialView] = useState<"login" | "register">("login");
   const [currentUser, setCurrentUser] = useState<{
     name: string;
     email: string;
@@ -150,7 +151,22 @@ function App() {
     [showFavoriteRoutesOnly, routes, favoriteRouteIds],
   );
 
+  const openAccount = useCallback((view: "login" | "register" = "login") => {
+    setAccountInitialView(view);
+    setIsAccountOpen(true);
+  }, []);
+
   const handleAccountClose = useCallback(() => setIsAccountOpen(false), []);
+
+  const handleNoticeLogin = useCallback(() => {
+    clearNotice();
+    openAccount("login");
+  }, [clearNotice, openAccount]);
+
+  const handleNoticeRegister = useCallback(() => {
+    clearNotice();
+    openAccount("register");
+  }, [clearNotice, openAccount]);
   const handleAuthSuccess = useCallback(
     (user: { name: string; email: string }) => {
       setCurrentUser(user);
@@ -191,7 +207,7 @@ function App() {
             type="button"
             aria-label="Личный кабинет"
             title="Личный кабинет"
-            onClick={() => setIsAccountOpen(true)}
+            onClick={() => openAccount("login")}
           >
             <span className="profile-button__icon" aria-hidden>
               👤
@@ -430,11 +446,20 @@ function App() {
         />
       )}
 
-      {notice && <AlertModal message={notice} onClose={clearNotice} />}
+      {notice && (
+        <AlertModal
+          message={notice.message}
+          onClose={clearNotice}
+          actionLabel={notice.action === "login" ? "Войти" : undefined}
+          onAction={notice.action === "login" ? handleNoticeLogin : undefined}
+          onRegister={notice.action === "login" ? handleNoticeRegister : undefined}
+        />
+      )}
 
       {isAccountOpen && (
         <AccountOverlay
           user={currentUser}
+          initialView={accountInitialView}
           onClose={handleAccountClose}
           onAuthSuccess={handleAuthSuccess}
           onLogout={handleLogout}

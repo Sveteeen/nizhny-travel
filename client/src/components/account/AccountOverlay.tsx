@@ -1,12 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { AccountModal } from './AccountModal'
 import { LoginModal } from './LoginModal'
 import { RegisterModal } from './RegisterModal'
 import { clearStoredUser } from './storage'
-import type { AccountView, PublicUser } from './types'
+import type { PublicUser } from './types'
 
 type AccountOverlayProps = {
   user: PublicUser | null
+  initialView?: 'login' | 'register'
   onClose: () => void
   onAuthSuccess: (user: PublicUser) => void
   onLogout: () => void
@@ -17,6 +18,7 @@ type AccountOverlayProps = {
 
 export const AccountOverlay = ({
   user,
+  initialView = 'login',
   onClose,
   onAuthSuccess,
   onLogout,
@@ -24,67 +26,52 @@ export const AccountOverlay = ({
   onOpenFavoritePlaces,
   onOpenFavoriteRoutes,
 }: AccountOverlayProps) => {
-  const [view, setView] = useState<AccountView>(user ? 'cabinet' : 'login')
-
-  useEffect(() => {
-    setView(user ? 'cabinet' : 'login')
-  }, [user])
+  const [authView, setAuthView] = useState<'login' | 'register'>(initialView)
 
   const handleAuthSuccess = (nextUser: PublicUser) => {
     onAuthSuccess(nextUser)
-    setView('cabinet')
   }
 
   const handleLogout = () => {
     clearStoredUser()
     onLogout()
-    setView('login')
+    setAuthView('login')
   }
 
-  if (view === 'login') {
+  if (user) {
     return (
-      <LoginModal
+      <AccountModal
+        user={user}
         onClose={onClose}
-        onSuccess={handleAuthSuccess}
-        onOpenRegister={() => setView('register')}
+        onUpdateProfile={onUpdateProfile}
+        onOpenLogin={handleLogout}
+        onOpenRegister={() => {
+          clearStoredUser()
+          onLogout()
+          setAuthView('register')
+        }}
+        onOpenFavoritePlaces={onOpenFavoritePlaces}
+        onOpenFavoriteRoutes={onOpenFavoriteRoutes}
+        onLogout={handleLogout}
       />
     )
   }
 
-  if (view === 'register') {
+  if (authView === 'register') {
     return (
       <RegisterModal
         onClose={onClose}
         onSuccess={handleAuthSuccess}
-        onOpenLogin={() => setView('login')}
-      />
-    )
-  }
-
-  if (!user) {
-    return (
-      <LoginModal
-        onClose={onClose}
-        onSuccess={handleAuthSuccess}
-        onOpenRegister={() => setView('register')}
+        onOpenLogin={() => setAuthView('login')}
       />
     )
   }
 
   return (
-    <AccountModal
-      user={user}
+    <LoginModal
       onClose={onClose}
-      onUpdateProfile={onUpdateProfile}
-      onOpenLogin={handleLogout}
-      onOpenRegister={() => {
-        clearStoredUser()
-        onLogout()
-        setView('register')
-      }}
-      onOpenFavoritePlaces={onOpenFavoritePlaces}
-      onOpenFavoriteRoutes={onOpenFavoriteRoutes}
-      onLogout={handleLogout}
+      onSuccess={handleAuthSuccess}
+      onOpenRegister={() => setAuthView('register')}
     />
   )
 }

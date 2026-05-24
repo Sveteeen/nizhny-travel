@@ -402,15 +402,28 @@
   border: 1px solid #2d456f;
   background: #101a2c;
   padding: 18px;
+}
+
+.modal__content,
+.filter-select__menu {
   scrollbar-width: thin;
+}
+
+.modal__content {
   scrollbar-color: #3f5f94 #101a2c;
 }
 
-.modal__content::-webkit-scrollbar {
+.filter-select__menu {
+  scrollbar-color: #3f5f94 #101c31;
+}
+
+.modal__content::-webkit-scrollbar,
+.filter-select__menu::-webkit-scrollbar {
   width: 8px;
 }
 
-.modal__content::-webkit-scrollbar-track {
+.modal__content::-webkit-scrollbar-track,
+.filter-select__menu::-webkit-scrollbar-track {
   background: transparent;
   margin: 8px 0;
 }
@@ -421,11 +434,19 @@
   border: 2px solid #101a2c;
 }
 
-.modal__content::-webkit-scrollbar-thumb:hover {
+.filter-select__menu::-webkit-scrollbar-thumb {
+  background: #2d456f;
+  border-radius: 999px;
+  border: 2px solid #101c31;
+}
+
+.modal__content::-webkit-scrollbar-thumb:hover,
+.filter-select__menu::-webkit-scrollbar-thumb:hover {
   background: #4a7ac7;
 }
 
-.modal__content::-webkit-scrollbar-corner {
+.modal__content::-webkit-scrollbar-corner,
+.filter-select__menu::-webkit-scrollbar-corner {
   background: transparent;
 }
 
@@ -440,6 +461,15 @@
   color: #dce7ff;
   font-size: 1rem;
   line-height: 1.5;
+}
+
+.alert-modal__action {
+  margin-top: 18px;
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  cursor: pointer;
 }
 
 .modal__close {

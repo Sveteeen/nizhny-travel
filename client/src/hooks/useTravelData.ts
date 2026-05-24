@@ -10,6 +10,11 @@ const getAuthConfig = () => {
   return token ? { headers: { Authorization: `Bearer ${token}` } } : {}
 }
 
+export type Notice = {
+  message: string
+  action?: 'login'
+}
+
 export const useTravelData = (isAuthenticated: boolean) => {
   const [places, setPlaces] = useState<PlaceListItem[]>([])
   const [routes, setRoutes] = useState<RouteListItem[]>([])
@@ -20,7 +25,7 @@ export const useTravelData = (isAuthenticated: boolean) => {
   const [favoritesLoading, setFavoritesLoading] = useState<number | null>(null)
   const [favoriteRoutesLoading, setFavoriteRoutesLoading] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [notice, setNotice] = useState<string | null>(null)
+  const [notice, setNotice] = useState<Notice | null>(null)
   const [yandexApiKey, setYandexApiKey] = useState<string | null>(null)
   const [favoritePlaceIds, setFavoritePlaceIds] = useState<Set<number>>(new Set())
   const [favoriteRouteIds, setFavoriteRouteIds] = useState<Set<number>>(new Set())
@@ -43,7 +48,7 @@ export const useTravelData = (isAuthenticated: boolean) => {
       setFavoritePlaceIds(new Set(favoritePlaces.map((item) => item.place_id)))
       setFavoriteRouteIds(new Set(favoriteRoutes.map((item) => item.route_id)))
     } catch {
-      setNotice('Не удалось загрузить избранное.')
+      setNotice({ message: 'Не удалось загрузить избранное.' })
     }
   }, [])
 
@@ -115,7 +120,10 @@ export const useTravelData = (isAuthenticated: boolean) => {
 
   const togglePlaceFavorite = async (placeId: number) => {
     if (!readAuthToken()) {
-      setNotice('Войдите в аккаунт, чтобы добавить место в избранное.')
+      setNotice({
+        message: 'Войдите в аккаунт, чтобы добавить место в избранное.',
+        action: 'login',
+      })
       return
     }
 
@@ -135,7 +143,7 @@ export const useTravelData = (isAuthenticated: boolean) => {
         setFavoritePlaceIds((prev) => new Set(prev).add(placeId))
       }
     } catch {
-      setNotice('Не удалось обновить избранное. Проверьте вход в аккаунт.')
+      setNotice({ message: 'Не удалось обновить избранное. Проверьте вход в аккаунт.' })
     } finally {
       setFavoritesLoading(null)
     }
@@ -143,7 +151,10 @@ export const useTravelData = (isAuthenticated: boolean) => {
 
   const toggleRouteFavorite = async (routeId: number) => {
     if (!readAuthToken()) {
-      setNotice('Войдите в аккаунт, чтобы добавить маршрут в избранное.')
+      setNotice({
+        message: 'Войдите в аккаунт, чтобы добавить маршрут в избранное.',
+        action: 'login',
+      })
       return
     }
 
@@ -163,7 +174,7 @@ export const useTravelData = (isAuthenticated: boolean) => {
         setFavoriteRouteIds((prev) => new Set(prev).add(routeId))
       }
     } catch {
-      setNotice('Не удалось обновить избранное. Проверьте вход в аккаунт.')
+      setNotice({ message: 'Не удалось обновить избранное. Проверьте вход в аккаунт.' })
     } finally {
       setFavoriteRoutesLoading(null)
     }
