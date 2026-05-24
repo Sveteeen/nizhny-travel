@@ -205,13 +205,15 @@ export const useTravelData = (isAuthenticated: boolean) => {
     }
   }
 
-  const searchRoutes = async (query: string) => {
+  const fetchRoutes = async (filters: { search?: string; sort?: string } = {}) => {
     try {
-      const params = query.trim() ? { search: query.trim() } : undefined
+      const params: Record<string, string> = {}
+      if (filters.search?.trim()) params.search = filters.search.trim()
+      if (filters.sort) params.sort = filters.sort
       const { data } = await axios.get<RouteListItem[]>(`${API_URL}/routes`, { params })
       setRoutes(data)
     } catch {
-      setError('Не удалось выполнить поиск маршрутов.')
+      setError('Не удалось загрузить маршруты.')
     }
   }
 
@@ -238,7 +240,7 @@ export const useTravelData = (isAuthenticated: boolean) => {
     categories,
     tags,
     fetchPlaces,
-    searchRoutes,
+    fetchRoutes,
     loadFavorites,
   }
 }

@@ -37,6 +37,8 @@ function App() {
   const [viewerState, setViewerState] = useState<ViewerState | null>(null);
   const [showFavoritePlacesOnly, setShowFavoritePlacesOnly] = useState(false);
   const [showFavoriteRoutesOnly, setShowFavoriteRoutesOnly] = useState(false);
+  const [mapSearch, setMapSearch] = useState("");
+  const [showMapFavoritesOnly, setShowMapFavoritesOnly] = useState(false);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [accountInitialView, setAccountInitialView] = useState<"login" | "register">("login");
   const [pendingPlannerRouteId, setPendingPlannerRouteId] = useState<number | null>(null);
@@ -92,17 +94,39 @@ function App() {
     categories,
     tags,
     fetchPlaces,
-    searchRoutes,
+    fetchRoutes,
     loadFavorites,
   } = useTravelData(!!currentUser)
 
   const placeFiltersRef = useRef<{ search?: string; category?: number; tag?: number }>({})
+  const routeFiltersRef = useRef<{ search?: string; sort?: string }>({})
+
+  const routeSortOptions = useMemo(
+    () => [
+      { value: "", label: "По умолчанию" },
+      { value: "duration_asc", label: "Сначала короткие" },
+      { value: "duration_desc", label: "Сначала длинные" },
+    ],
+    [],
+  )
 
   const applyPlaceFilters = useCallback((patch: Partial<typeof placeFiltersRef.current>) => {
     const prev = placeFiltersRef.current
     placeFiltersRef.current = { ...prev, ...patch }
     fetchPlaces(placeFiltersRef.current)
   }, [fetchPlaces]);
+
+  const applyRouteFilters = useCallback(
+    (patch: Partial<typeof routeFiltersRef.current>) => {
+      routeFiltersRef.current = { ...routeFiltersRef.current, ...patch }
+      const { search, sort } = routeFiltersRef.current
+      void fetchRoutes({
+        search,
+        sort: sort || undefined,
+      })
+    },
+    [fetchRoutes],
+  )
 
   const openViewer = (
     images: { src: string; alt: string }[],
@@ -152,6 +176,20 @@ function App() {
         : routes,
     [showFavoriteRoutesOnly, routes, favoriteRouteIds],
   );
+
+  const visibleMapPlaces = useMemo(() => {
+    let list = places;
+    if (showMapFavoritesOnly) {
+      list = list.filter((place) => favoritePlaceIds.has(place.id));
+    }
+    const query = mapSearch.trim().toLowerCase();
+    if (!query) return list;
+    return list.filter(
+      (place) =>
+        place.name.toLowerCase().includes(query) ||
+        place.address.toLowerCase().includes(query),
+    );
+  }, [places, showMapFavoritesOnly, favoritePlaceIds, mapSearch]);
 
   const openAccount = useCallback((view: "login" | "register" = "login") => {
     setAccountInitialView(view);
@@ -254,16 +292,16 @@ function App() {
           Маршруты
         </button>
         <button
-          className={`tab ${activeTab === "map" ? "tab--active" : ""}`}
-          onClick={() => setActiveTab("map")}
-        >
-          Карта
-        </button>
-        <button
           className={`tab ${activeTab === "planner" ? "tab--active" : ""}`}
           onClick={() => setActiveTab("planner")}
         >
           Планировщик маршрутов
+        </button>
+        <button
+          className={`tab ${activeTab === "map" ? "tab--active" : ""}`}
+          onClick={() => setActiveTab("map")}
+        >
+          Карта
         </button>
       </section>
 
@@ -340,14 +378,17 @@ function App() {
           <FiltersBar
             searchPlaceholder="Поиск маршрутов"
             searchLabel="Поиск маршрутов"
-            categoryLabel="Фильтр по категории маршрутов"
-            tagsLabel="Фильтр по тегам маршрутов"
-            onSearchChange={searchRoutes}
+            onSearchChange={(query) =>
+              applyRouteFilters({ search: query || undefined })
+            }
+            sortLabel="Сортировка по длительности"
+            sortOptions={routeSortOptions}
+            onSortChange={(sort) =>
+              applyRouteFilters({ sort: sort || undefined })
+            }
+            compactSwitch
             extraControl={
-              <label
-                className="favorite-switch"
-                htmlFor="favorites-only-routes"
-              >
+              <label className="favorite-switch" htmlFor="favorites-only-routes">
                 <span className="favorite-switch__label">Избранное</span>
                 <input
                   id="favorites-only-routes"
@@ -393,18 +434,48 @@ function App() {
               чтобы увидеть название и адрес.
             </p>
           </div>
-          {yandexApiKey ? (
+          <FiltersBar
+            searchPlaceholder="Поиск на карте"
+            searchLabel="Поиск на карте"
+            onSearchChange={setMapSearch}
+            compactSwitch
+            extraControl={
+              <label className="favorite-switch" htmlFor="favorites-only-map">
+                <span className="favorite-switch__label">Избранное</span>
+                <input
+                  id="favorites-only-map"
+                  className="favorite-switch__input"
+                  type="checkbox"
+                  checked={showMapFavoritesOnly}
+                  onChange={(event) =>
+                    setShowMapFavoritesOnly(event.target.checked)
+                  }
+                />
+                <span className="favorite-switch__slider" aria-hidden />
+              </label>
+            }
+          />
+          {showMapFavoritesOnly && visibleMapPlaces.length === 0 && (
+            <div className="state">Пока нет избранных мест на карте.</div>
+          )}
+          {visibleMapPlaces.length > 0 && yandexApiKey && (
             <PlacesOverviewMap
               apiKey={yandexApiKey}
-              places={places}
+              places={visibleMapPlaces}
               normalizeImageUrl={normalizeImageUrl}
               onOpenDetails={openPlaceDetails}
             />
-          ) : (
+          )}
+          {visibleMapPlaces.length > 0 && !yandexApiKey && (
             <div className="map map--big map--fallback">
               Не настроен ключ Яндекс.Карт
             </div>
           )}
+          {!showMapFavoritesOnly &&
+            visibleMapPlaces.length === 0 &&
+            mapSearch.trim() && (
+              <div className="state">Ничего не найдено по вашему запросу.</div>
+            )}
         </section>
       )}
 

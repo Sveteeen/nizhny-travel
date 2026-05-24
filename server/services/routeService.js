@@ -1,8 +1,28 @@
 const { Op } = require('sequelize');
 const { Route, RoutePlace, Place } = require('../db/models');
 
+const ROUTE_SORT_OPTIONS = new Set(['duration_asc', 'duration_desc']);
+
+const resolveRouteOrder = (sort) => {
+  if (sort === 'duration_asc') {
+    return [
+      ['duration_minutes', 'ASC'],
+      ['id', 'ASC'],
+    ];
+  }
+
+  if (sort === 'duration_desc') {
+    return [
+      ['duration_minutes', 'DESC'],
+      ['id', 'ASC'],
+    ];
+  }
+
+  return [['id', 'ASC']];
+};
+
 const getRoutes = async (filter = {}) => {
-  const { search, category = [], tag = [] } = filter;
+  const { search, sort } = filter;
   const whereParams = {};
 
   if (search) {
@@ -13,10 +33,12 @@ const getRoutes = async (filter = {}) => {
     ];
   }
 
+  const normalizedSort = ROUTE_SORT_OPTIONS.has(sort) ? sort : null;
+
   const routes = await Route.findAll({
     where: whereParams,
     attributes: ['id', 'name', 'description', 'duration_minutes', 'distance_km', 'main_photo'],
-    order: [['id', 'ASC']],
+    order: resolveRouteOrder(normalizedSort),
   });
 
   return routes.map((route) => ({

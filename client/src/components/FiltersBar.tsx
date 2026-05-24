@@ -1,15 +1,19 @@
 import { useMemo, useRef, type ReactNode } from 'react'
-import { FilterSelect } from './FilterSelect'
+import { FilterSelect, type FilterSelectOption } from './FilterSelect'
 import type { Category, Tag } from '../types'
 
 type FiltersBarProps = {
   searchPlaceholder: string
   searchLabel: string
-  categoryLabel: string
-  tagsLabel: string
+  categoryLabel?: string
+  tagsLabel?: string
   categories?: Category[]
   tags?: Tag[]
   extraControl?: ReactNode
+  compactSwitch?: boolean
+  sortLabel?: string
+  sortOptions?: FilterSelectOption[]
+  onSortChange?: (value: string | null) => void
   onSearchChange?: (query: string) => void
   onCategoryChange?: (categoryId: number | null) => void
   onTagChange?: (tagId: number | null) => void
@@ -23,6 +27,10 @@ export const FiltersBar = ({
   categories,
   tags,
   extraControl,
+  compactSwitch = false,
+  sortLabel,
+  sortOptions,
+  onSortChange,
   onSearchChange,
   onCategoryChange,
   onTagChange,
@@ -60,19 +68,41 @@ export const FiltersBar = ({
       aria-label={searchLabel}
       onChange={(e) => handleSearchChange(e.target.value)}
     />
-    <FilterSelect
-      label={categoryLabel}
-      placeholder="Все категории"
-      options={categoryOptions}
-      onChange={(value) => onCategoryChange?.(value ? Number(value) : null)}
-    />
-    <FilterSelect
-      label={tagsLabel}
-      placeholder="Все теги"
-      options={tagOptions}
-      onChange={(value) => onTagChange?.(value ? Number(value) : null)}
-    />
-    {extraControl && <div className="filters__control filters__control--switch">{extraControl}</div>}
+    {onCategoryChange && (
+      <FilterSelect
+        label={categoryLabel ?? 'Категория'}
+        placeholder="Все категории"
+        options={categoryOptions}
+        onChange={(value) => onCategoryChange(value ? Number(value) : null)}
+      />
+    )}
+    {onTagChange && (
+      <FilterSelect
+        label={tagsLabel ?? 'Тег'}
+        placeholder="Все теги"
+        options={tagOptions}
+        onChange={(value) => onTagChange(value ? Number(value) : null)}
+      />
+    )}
+    {onSortChange && sortOptions && (
+      <FilterSelect
+        label={sortLabel ?? 'Сортировка'}
+        placeholder="По умолчанию"
+        options={sortOptions}
+        onChange={onSortChange}
+      />
+    )}
+    {extraControl && (
+      <div
+        className={
+          compactSwitch
+            ? 'filters__switch-slot filters__switch-slot--compact'
+            : 'filters__control filters__control--switch'
+        }
+      >
+        {extraControl}
+      </div>
+    )}
   </section>
   )
 }

@@ -318,6 +318,16 @@ const swaggerDocument = {
             schema: { type: 'string' },
             description: 'Поиск по имени или описанию',
           },
+          {
+            name: 'sort',
+            in: 'query',
+            required: false,
+            schema: {
+              type: 'string',
+              enum: ['duration_asc', 'duration_desc'],
+            },
+            description: 'Сортировка по длительности маршрута в минутах',
+          },
         ],
         responses: {
           200: {
