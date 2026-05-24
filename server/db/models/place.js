@@ -68,6 +68,11 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: 'place_id',
       as: 'tag_links',
     });
+
+    Place.hasMany(models.SavedRoutePlace, {
+      foreignKey: 'place_id',
+      as: 'saved_route_points',
+    });
   };
 
   return Place;

@@ -25,6 +25,8 @@ const PlacePhoto = require('./placePhoto')(sequelize, DataTypes);
 const FavouriteRoute = require('./favouriteRoute')(sequelize, DataTypes);
 const Tag = require('./tag')(sequelize, DataTypes);
 const TagPlace = require('./tagPlace')(sequelize, DataTypes);
+const SavedRoute = require('./savedRoute')(sequelize, DataTypes);
+const SavedRoutePlace = require('./savedRoutePlace')(sequelize, DataTypes);
 
 const db = {
   sequelize,
@@ -40,6 +42,8 @@ const db = {
   FavouriteRoute,
   Tag,
   TagPlace,
+  SavedRoute,
+  SavedRoutePlace,
 };
 
 Object.values(db).forEach((model) => {
