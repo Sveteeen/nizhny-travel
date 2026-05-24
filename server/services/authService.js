@@ -1,5 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { Op } = require('sequelize');
 const { User, Role } = require('../db/models');
 
 const USER_ROLE_ID = 2;
@@ -75,5 +76,57 @@ const getUserById = async (userId) => {
   return user;
 }
 
-module.exports = { login, register, getUserById };
+const updateUser = async (userId, data) => {
+  const user = await User.findOne({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    return { error: 'Пользователь не найден.', statusCode: 404 };
+  }
+
+  const save = {
+    phone: data.phone || user.phone,
+    name: data.name || user.name,
+  };
+
+  if (data.password) {
+    save.password = await bcrypt.hash(data.password, 10);
+  }
+
+  if (data.email) {
+    const isUser = await User.findOne({
+      where: { 
+        email: data.email.trim().toLowerCase(),
+        id: { [Op.ne]: userId },
+      }
+    });
+
+    if (isUser) {
+      return { error: 'Пользователь с такой почтой уже зарегистрирован.', statusCode: 409 };
+    }
+    save.email = data.email.trim().toLowerCase();
+  }
+
+  if (data.username) {
+    const isUser = await User.findOne({
+      where: { 
+        username: data.username.trim().toLowerCase(),
+        id: { [Op.ne]: userId },
+      }
+    });
+
+    if (isUser) {
+      return { error: 'Пользователь с таким именем уже зарегистрирован.', statusCode: 409 };
+    }
+    save.username = data.username.trim().toLowerCase();
+  }
+
+  await user.update(save);
+  
+  const updUser = await getUserById(userId);
+  return updUser;
+};
+
+module.exports = { login, register, getUserById, updateUser};
 

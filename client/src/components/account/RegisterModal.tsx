@@ -13,6 +13,7 @@ type RegisterModalProps = {
 export const RegisterModal = ({ onClose, onSuccess, onOpenLogin }: RegisterModalProps) => {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [message, setMessage] = useState<string | null>(null)
@@ -48,6 +49,7 @@ export const RegisterModal = ({ onClose, onSuccess, onOpenLogin }: RegisterModal
         email: normalizedEmail,
         password,
         name: name.trim() || undefined,
+        phone: phone.trim() || undefined,
       })
       const publicUser = toPublicUser(user)
       saveSession({ token, user: publicUser })
@@ -83,6 +85,15 @@ export const RegisterModal = ({ onClose, onSuccess, onOpenLogin }: RegisterModal
           autoComplete="email"
           disabled={isSubmitting}
           onChange={(event) => setEmail(event.target.value)}
+        />
+        <input
+          className="filters__control"
+          type="tel"
+          value={phone}
+          placeholder="Телефон"
+          autoComplete="tel"
+          disabled={isSubmitting}
+          onChange={(event) => setPhone(event.target.value)}
         />
         <input
           className="filters__control"

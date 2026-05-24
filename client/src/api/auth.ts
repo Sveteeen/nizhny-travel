@@ -56,3 +56,17 @@ export const fetchMe = async (token: string) => {
   })
   return data
 }
+
+export type UpdateUserPayload = {
+  name?: string
+  email?: string
+  phone?: string
+  password?: string
+}
+
+export const updateUser = async (token: string, payload: UpdateUserPayload) => {
+  const { data } = await axios.put<ApiUser>(`${API_URL}/user/update`, payload, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  return data
+}

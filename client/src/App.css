@@ -755,6 +755,18 @@
   color: #a6bde5;
 }
 
+.account-modal__meta {
+  margin: 0;
+  color: #8fa8d6;
+  font-size: 0.92rem;
+}
+
+.account-modal__edit-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
 .account-modal__favorites {
   display: grid;
   grid-template-columns: 1fr 1fr;

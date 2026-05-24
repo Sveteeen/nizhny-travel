@@ -48,5 +48,18 @@ const me = async (req, res, next) => {
     } 
 };
 
-module.exports = { login, register, me };
+const updateUser = async (req, res, next) => {
+    try {
+        const result = await authService.updateUser(req.userId, req.body);
+
+        if (result.error) {
+            return res.status(result.statusCode || 400).json({ error: result.error });
+        }
+
+        return res.json(result);
+    } catch (error) {
+        return next(error);
+    }
+};
+module.exports = { login, register, me, updateUser };
 
