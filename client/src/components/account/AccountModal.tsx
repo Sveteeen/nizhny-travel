@@ -331,7 +331,7 @@ export const AccountModal = ({
             className="filters__control"
             type="email"
             value={form.email}
-            placeholder="Email"
+            placeholder="Почта"
             autoComplete="email"
             disabled={isSubmitting}
             onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))}

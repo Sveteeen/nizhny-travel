@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-  buildPlannerRoute,
   deleteSavedRoute,
   fetchSavedRoute,
   fetchSavedRoutes,
   savePlannerRoute,
 } from '../../api/planner'
+import { buildClientRoute } from '../../utils/buildClientRoute'
 import { readAuthToken } from '../account/storage'
 import { PlannerRouteMap } from '../maps/PlannerRouteMap'
 import { PlannerSelectionMap } from '../maps/PlannerSelectionMap'
@@ -226,22 +226,23 @@ export const PlannerPage = ({
       return
     }
 
+    if (!yandexApiKey) {
+      setError('Не настроен ключ Яндекс.Карт.')
+      return
+    }
+
     setBuilding(true)
     setError(null)
     setSuccess(null)
     clearPreview()
 
     try {
-      const token = readAuthToken()
-      const result = await buildPlannerRoute(
-        {
-          placeIds: selectedIds,
-          startPlaceId: startPlaceId ?? selectedIds[0],
-          optimize: true,
-          source,
-        },
-        token,
-      )
+      const result = await buildClientRoute({
+        apiKey: yandexApiKey,
+        places,
+        selectedIds,
+        startPlaceId: startPlaceId ?? selectedIds[0],
+      })
       setPreview(result)
     } catch (buildError) {
       setError(buildError instanceof Error ? buildError.message : 'Не удалось построить маршрут.')
