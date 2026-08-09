@@ -272,7 +272,20 @@ function App() {
             </span>
           </button>
         </div>
-        <h1>Туристический гид по Нижнему Новгороду</h1>
+        <div className="hero__title-row">
+          <h1>
+            Туристический гид по Нижнему
+            <br />
+            Новгороду
+          </h1>
+          <img
+            className="hero__coat"
+            src="/coat-of-arms.png"
+            alt="Герб Нижегородской области"
+            width={96}
+            height={99}
+          />
+        </div>
         <p className="hero__description">
           Подборка мест и маршрутов по любым запросам
         </p>
