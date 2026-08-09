@@ -64,8 +64,14 @@
 }
 
 .profile-button__icon {
-  font-size: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   line-height: 1;
+}
+
+.profile-button__icon svg {
+  display: block;
 }
 
 .hero__description {
