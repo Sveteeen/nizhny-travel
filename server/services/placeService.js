@@ -1,9 +1,17 @@
 const { Op } = require('sequelize');
 const { Place, Category, PlacePhoto, TagPlace, Tag } = require('../db/models');
 
+const parseIds = (value) => {
+  if (value == null || value === '') return [];
+  const raw = Array.isArray(value) ? value : String(value).split(',');
+  return [...new Set(raw.map(Number).filter((id) => Number.isInteger(id) && id > 0))];
+};
+
 const getAllPlaces = async (filter = {}) => {
   const { search, category, tag } = filter;
   const whereParams = {};
+  const categoryIds = parseIds(category);
+  const tagIds = parseIds(tag);
 
   if (search) {
     const pattern = `%${search.trim()}%`;
@@ -21,16 +29,20 @@ const getAllPlaces = async (filter = {}) => {
     },
   ];
 
-  if (category) {
-    whereParams.category_id = Number(category);
+  if (categoryIds.length === 1) {
+    whereParams.category_id = categoryIds[0];
+  } else if (categoryIds.length > 1) {
+    whereParams.category_id = { [Op.in]: categoryIds };
   }
 
-  if (tag) {
+  if (tagIds.length > 0) {
     includeTables.push({
       model: TagPlace,
       as: 'tag_links',
-      where: { tag_id: Number(tag) },
-      requiered: true,
+      where: {
+        tag_id: tagIds.length === 1 ? tagIds[0] : { [Op.in]: tagIds },
+      },
+      required: true,
     });
   }
 
