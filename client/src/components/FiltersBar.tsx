@@ -15,8 +15,8 @@ type FiltersBarProps = {
   sortOptions?: FilterSelectOption[]
   onSortChange?: (value: string | null) => void
   onSearchChange?: (query: string) => void
-  onCategoryChange?: (categoryId: number | null) => void
-  onTagChange?: (tagId: number | null) => void
+  onCategoryChange?: (categoryIds: number[]) => void
+  onTagChange?: (tagIds: number[]) => void
 }
 
 export const FiltersBar = ({
@@ -70,18 +70,24 @@ export const FiltersBar = ({
     />
     {onCategoryChange && (
       <FilterSelect
+        multiple
         label={categoryLabel ?? 'Категория'}
         placeholder="Все категории"
         options={categoryOptions}
-        onChange={(value) => onCategoryChange(value ? Number(value) : null)}
+        onChange={(values) =>
+          onCategoryChange(values.map(Number).filter((id) => Number.isInteger(id) && id > 0))
+        }
       />
     )}
     {onTagChange && (
       <FilterSelect
+        multiple
         label={tagsLabel ?? 'Тег'}
         placeholder="Все теги"
         options={tagOptions}
-        onChange={(value) => onTagChange(value ? Number(value) : null)}
+        onChange={(values) =>
+          onTagChange(values.map(Number).filter((id) => Number.isInteger(id) && id > 0))
+        }
       />
     )}
     {onSortChange && sortOptions && (

@@ -98,7 +98,7 @@ function App() {
     loadFavorites,
   } = useTravelData(!!currentUser)
 
-  const placeFiltersRef = useRef<{ search?: string; category?: number; tag?: number }>({})
+  const placeFiltersRef = useRef<{ search?: string; category?: number[]; tag?: number[] }>({})
   const routeFiltersRef = useRef<{ search?: string; sort?: string }>({})
 
   const routeSortOptions = useMemo(
@@ -331,8 +331,12 @@ function App() {
             categories={categories}
             tags={tags}
             onSearchChange={(q) => applyPlaceFilters({ search: q || undefined })}
-            onCategoryChange={(id) => applyPlaceFilters({ category: id ?? undefined })}
-            onTagChange={(id) => applyPlaceFilters({ tag: id ?? undefined })}
+            onCategoryChange={(ids) =>
+              applyPlaceFilters({ category: ids.length ? ids : undefined })
+            }
+            onTagChange={(ids) =>
+              applyPlaceFilters({ tag: ids.length ? ids : undefined })
+            }
             extraControl={
               <label
                 className="favorite-switch"

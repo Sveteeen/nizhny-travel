@@ -192,6 +192,30 @@
   cursor: pointer;
 }
 
+.filter-select__option--multi {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-select__check {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid #5f7eb3;
+  border-radius: 4px;
+  background: transparent;
+}
+
+.filter-select__check--on {
+  border-color: #9ec0ff;
+  background-color: #3a66b0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.2L4.8 8.5L9.5 3.5' stroke='%23f3f7ff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 12px 12px;
+}
+
 .filter-select__option:hover,
 .filter-select__option--active {
   background: #2d4f8a;

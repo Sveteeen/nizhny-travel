@@ -192,12 +192,14 @@ export const useTravelData = (isAuthenticated: boolean) => {
     setRouteDetails(null)
   }
 
-  const fetchPlaces = async (filters: { search?: string; category?: number; tag?: number } = {}) => {
+  const fetchPlaces = async (
+    filters: { search?: string; category?: number[]; tag?: number[] } = {},
+  ) => {
     try {
-      const params: Record<string, string | number> = {}
+      const params: Record<string, string> = {}
       if (filters.search?.trim()) params.search = filters.search.trim()
-      if (filters.category) params.category = filters.category
-      if (filters.tag) params.tag = filters.tag
+      if (filters.category?.length) params.category = filters.category.join(',')
+      if (filters.tag?.length) params.tag = filters.tag.join(',')
       const { data } = await axios.get<PlaceListItem[]>(`${API_URL}/places`, { params })
       setPlaces(data)
     } catch {
