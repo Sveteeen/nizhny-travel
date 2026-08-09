@@ -30,7 +30,7 @@ const createPlaceMarker = (
       width: 52px;
       height: 52px;
       border-radius: 50%;
-      border: 3px solid ${isSelected ? '#2f6dff' : '#e9f2ff'};
+      border: 3px solid ${isSelected ? '#c2410c' : '#fef7ed'};
       box-shadow: 0 8px 16px rgba(9, 15, 28, 0.45);
       background-image: url('${imageUrl}');
       background-size: cover;

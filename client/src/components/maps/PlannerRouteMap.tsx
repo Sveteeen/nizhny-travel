@@ -51,7 +51,7 @@ export const PlannerRouteMap = ({
           const routeLine = new ymaps.Polyline(
             geometry,
             {},
-            { strokeColor: '#2f6dff', strokeWidth: 5, strokeOpacity: 0.92 },
+            { strokeColor: '#c2410c', strokeWidth: 5, strokeOpacity: 0.92 },
           )
           mapInstanceRef.current.geoObjects.add(routeLine)
 

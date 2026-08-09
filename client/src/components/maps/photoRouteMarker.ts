@@ -18,7 +18,7 @@ export const createPhotoRouteMarker = (
         width: 52px;
         height: 52px;
         border-radius: 50%;
-        border: 3px solid #2f6dff;
+        border: 3px solid #c2410c;
         box-shadow: 0 8px 16px rgba(9, 15, 28, 0.45);
         background-image: url('${imageUrl}');
         background-size: cover;
@@ -32,8 +32,8 @@ export const createPhotoRouteMarker = (
         width: 20px;
         height: 20px;
         border-radius: 50%;
-        background: #2f6dff;
-        border: 2px solid #e9f2ff;
+        background: #c2410c;
+        border: 2px solid #fef7ed;
         color: #fff;
         font-size: 11px;
         font-weight: 700;

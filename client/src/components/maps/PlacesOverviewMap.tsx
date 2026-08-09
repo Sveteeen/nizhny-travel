@@ -52,7 +52,7 @@ export const PlacesOverviewMap = ({ apiKey, places, normalizeImageUrl, onOpenDet
               width: 56px;
               height: 56px;
               border-radius: 50%;
-              border: 2px solid #e9f2ff;
+              border: 2px solid #fef7ed;
               box-shadow: 0 8px 16px rgba(9, 15, 28, 0.45);
               background-image: url('${imageUrl}');
               background-size: cover;

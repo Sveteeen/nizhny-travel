@@ -14,9 +14,9 @@ type RouteMiniMapProps = {
 }
 
 const ROUTE_STYLE = {
-  routeActiveStrokeColor: '#2f6dff',
+  routeActiveStrokeColor: '#c2410c',
   routeActiveStrokeWidth: 4,
-  routeOpenStrokeColor: '#2f6dff',
+  routeOpenStrokeColor: '#c2410c',
   routeOpenStrokeWidth: 4,
   boundsAutoApply: true,
   wayPointVisible: false,
@@ -41,7 +41,7 @@ const addStraightLineFallback = (
   const routeLine = new ymaps.Polyline(
     points.map((point) => [point.latitude, point.longitude]),
     {},
-    { strokeColor: '#2f6dff', strokeWidth: 4, strokeOpacity: 0.9 },
+    { strokeColor: '#c2410c', strokeWidth: 4, strokeOpacity: 0.9 },
   )
 
   map.geoObjects.add(routeLine)

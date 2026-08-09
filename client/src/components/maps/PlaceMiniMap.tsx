@@ -28,7 +28,7 @@ export const PlaceMiniMap = ({ apiKey, latitude, longitude }: PlaceMiniMapProps)
           controls: ['zoomControl'],
         })
         const marker = new ymaps.Placemark([latitude, longitude], {}, {
-          preset: 'islands#blueCircleDotIcon',
+          preset: 'islands#darkGreenCircleDotIcon',
         })
         mapInstanceRef.current.geoObjects.add(marker)
       } catch {
